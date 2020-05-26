@@ -1,0 +1,9 @@
+version: "3.5"
+
+services:
+  api:
+    image: my-app:api-dev
+    command: ./api root
+    volumes:
+    - ./:/go/src/github.com/liamhendricks/cmd-starter/
+    working_dir: "/go/src/github.com/liamhendricks/cmd-starter/"
