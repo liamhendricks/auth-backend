@@ -1,6 +1,7 @@
 FROM golang:1.14-alpine as env
 
 ENV GO111MODULE=on
+ENV GOPATH=
 ENV GOFLAGS=-mod=vendor
 ENV CGO_ENABLED=0
 
@@ -21,4 +22,4 @@ RUN go build -o api
 
 FROM env as final
 
-CMD ["/path/to/the/app", "root"]
+CMD ["/go/src/github.com/liamhendricks/auth-backend/api", "server"]

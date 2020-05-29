@@ -1,9 +1,30 @@
 version: "3.5"
 
+volumes:
+  pkg:
+  db-volume:
+
 services:
   api:
-    image: my-app:api-dev
-    command: ./api root
+    image: auth-backend:api-dev
+    command: ./api server
     volumes:
-    - ./:/go/src/github.com/liamhendricks/cmd-starter/
-    working_dir: "/go/src/github.com/liamhendricks/cmd-starter/"
+    - pkg:/go/pkg
+    - ./:/go/src/github.com/liamhendricks/auth-backend/
+    working_dir: "/go/src/github.com/liamhendricks/auth-backend/"
+    env_file:
+    - .app.env
+    depends_on:
+    - auth_db
+    ports:
+    - "8080:80"
+
+  auth_db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: auth
+    ports:
+    - "33011:3306"
+    volumes:
+    - db-volume:/var/lib/mysql
