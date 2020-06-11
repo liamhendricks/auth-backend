@@ -10,7 +10,7 @@ import (
 type UserRepo interface {
 	Save(model *models.User) (errs []error)
 	GetAll(q *query.Query) (m []*models.User, errs []error)
-	GetByID(id goat.ID, load bool) (m *models.User, errs []error)
+	GetByID(id goat.ID, load bool) (m models.User, errs []error)
 }
 
 type UsersRepoGorm struct {
@@ -18,7 +18,7 @@ type UsersRepoGorm struct {
 	disableAuth bool
 }
 
-func (u *UsersRepoGorm) Save(m *models.User) (errs []error) {
+func (u UsersRepoGorm) Save(m *models.User) (errs []error) {
 	if m.Model.ID.Valid() {
 		errs = u.db.Save(m).GetErrors()
 	} else {
@@ -27,7 +27,7 @@ func (u *UsersRepoGorm) Save(m *models.User) (errs []error) {
 	return
 }
 
-func (u *UsersRepoGorm) GetAll(q *query.Query) (m []*models.User, errs []error) {
+func (u UsersRepoGorm) GetAll(q *query.Query) (m []*models.User, errs []error) {
 	base := u.db.Model(&models.User{})
 	qr, err := q.ApplyToGorm(base)
 	if err != nil {
@@ -36,4 +36,9 @@ func (u *UsersRepoGorm) GetAll(q *query.Query) (m []*models.User, errs []error) 
 
 	errs = qr.Find(&m).GetErrors()
 	return m, errs
+}
+
+func (u UsersRepoGorm) GetByID(id goat.ID, load bool) (m models.User, errs []error) {
+	errs = u.db.First(&m, "id = ?", id).GetErrors()
+	return
 }

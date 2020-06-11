@@ -1,3 +1,5 @@
 vendor/*
 api
+auth-backend
 .app.env
+src/database/goose.log
