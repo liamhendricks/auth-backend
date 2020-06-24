@@ -22,7 +22,7 @@ local-down:
 	docker-compose rm -sf
 
 test:
-	docker-compose run --rm api go test -cover ./... -tags nojira
+	docker-compose run --rm api go test -v -cover ./... -tags nojira
 
 migrate: build
 	docker-compose run --rm api ./api migrate $(MIGRATION_ARG)

@@ -8,17 +8,17 @@ import (
 	"github.com/liamhendricks/auth-backend/src/http/controllers"
 )
 
-func InitRoutes(router http.Router, container app.ServiceContainer) {
-	userController := controllers.NewUserController(container.UserRepo)
+func InitRoutes(router http.Router, c app.ServiceContainer) {
+	userController := controllers.NewUserController(c.UserRepo, c.PasswordService, c.Errors)
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
 
 	//users
 	users := engine.Group("/users")
 	users.GET("", userController.Index)
-	users.POST("", userController.Store)
 	users.GET("/:id", userController.Show)
-	users.POST("/:id", userController.Update)
+	users.POST("", goat.BindRequestMiddleware(controllers.CreateUserRequest{}), userController.Store)
+	users.POST("/:id", goat.BindRequestMiddleware(controllers.UpdateUserRequest{}), userController.Update)
 	users.DELETE("/:id", userController.Delete)
 }
 

@@ -11,6 +11,14 @@ type UserRepo interface {
 	Save(model *models.User) (errs []error)
 	GetAll(q *query.Query) (m []*models.User, errs []error)
 	GetByID(id goat.ID, load bool) (m models.User, errs []error)
+	//Delete(id goat.ID)
+}
+
+func NewUserRepoGorm(db *gorm.DB, disable bool) UsersRepoGorm {
+	return UsersRepoGorm{
+		db:          db,
+		disableAuth: disable,
+	}
 }
 
 type UsersRepoGorm struct {

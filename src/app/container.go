@@ -4,14 +4,17 @@ import (
 	"github.com/68696c6c/goat"
 	"github.com/jinzhu/gorm"
 	"github.com/liamhendricks/auth-backend/src/repos"
+	"github.com/liamhendricks/auth-backend/src/services"
 	"github.com/sirupsen/logrus"
 )
 
 type ServiceContainer struct {
-	Config   Config
-	DB       *gorm.DB
-	Logger   *logrus.Logger
-	UserRepo repos.UserRepo
+	Config          Config
+	DB              *gorm.DB
+	Logger          *logrus.Logger
+	UserRepo        repos.UserRepo
+	PasswordService services.PasswordService
+	Errors          goat.ErrorHandler
 }
 
 var container ServiceContainer
@@ -23,11 +26,17 @@ func GetApp(c Config) (ServiceContainer, error) {
 	}
 
 	l := goat.GetLogger()
+	ur := repos.NewUserRepoGorm(db, false)
+	eh := goat.NewErrorHandler(l)
+	ps := services.NewPasswordServiceAES(c.PasswordConfig)
 
 	container = ServiceContainer{
-		Config: c,
-		DB:     db,
-		Logger: l,
+		Config:          c,
+		DB:              db,
+		Logger:          l,
+		UserRepo:        ur,
+		Errors:          eh,
+		PasswordService: ps,
 	}
 
 	return container, nil
