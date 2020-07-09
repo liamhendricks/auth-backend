@@ -20,6 +20,9 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 	users.POST("", goat.BindRequestMiddleware(controllers.CreateUserRequest{}), userController.Store)
 	users.POST("/:id", goat.BindRequestMiddleware(controllers.UpdateUserRequest{}), userController.Update)
 	users.DELETE("/:id", userController.Delete)
+
+	lessons := engine.Group("/lessons")
+	lessons.GET("")
 }
 
 func Health(c *gin.Context) {

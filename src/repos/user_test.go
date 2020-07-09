@@ -55,3 +55,11 @@ func TestUsersRepoGetAll(t *testing.T) {
 	require.Empty(t, errs)
 	require.GreaterOrEqual(t, len(u), 0)
 }
+
+func TestUsersRepoDelete(t *testing.T) {
+	id := tf.Users[2].ID
+	errs := tc.UserRepo.Delete(id)
+	require.Empty(t, errs)
+	_, errs = tc.UserRepo.GetByID(id, false)
+	require.NotNil(t, errs)
+}

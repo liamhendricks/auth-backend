@@ -100,16 +100,24 @@ func (u *UserController) Update(c *gin.Context) {
 		return
 	}
 
-	user.Name = req.Name
-	user.Email = req.Email
-
-	p, err := u.password.Encrypt([]byte(req.Password))
-	if err != nil {
-		u.errors.HandleErrorM(c, err, "cant handle password", goat.RespondServerError)
-		return
+	if req.Name != "" {
+		user.Name = req.Name
 	}
 
-	user.Password = string(p)
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+
+	if req.Password != "" {
+		p, err := u.password.Encrypt([]byte(req.Password))
+		if err != nil {
+			u.errors.HandleErrorM(c, err, "cant handle password", goat.RespondServerError)
+			return
+		}
+
+		user.Password = string(p)
+	}
+
 	errs = u.userRepo.Save(&user)
 	if len(errs) > 0 {
 		u.errors.HandleErrorsM(c, errs, "failed to save user", goat.RespondBadRequestError)
@@ -121,11 +129,18 @@ func (u *UserController) Update(c *gin.Context) {
 
 func (u *UserController) Delete(c *gin.Context) {
 	i := c.Param("id")
-	_, err := goat.ParseID(i)
+	id, err := goat.ParseID(i)
 	if err != nil {
 		u.errors.HandleErrorM(c, err, "failed to parse id: "+i, goat.RespondBadRequestError)
 		return
 	}
+
+	errs := u.userRepo.Delete(id)
+	if len(errs) > 0 {
+		u.errors.HandleErrorsM(c, errs, "failed to delete user", goat.RespondBadRequestError)
+	}
+
+	goat.RespondMessage(c, fmt.Sprintf("ID: %s has been deleted", id.String()))
 }
 
 func (u *UserController) Store(c *gin.Context) {

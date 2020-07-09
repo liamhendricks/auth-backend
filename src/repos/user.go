@@ -11,7 +11,7 @@ type UserRepo interface {
 	Save(model *models.User) (errs []error)
 	GetAll(q *query.Query) (m []*models.User, errs []error)
 	GetByID(id goat.ID, load bool) (m models.User, errs []error)
-	//Delete(id goat.ID)
+	Delete(id goat.ID) (errs []error)
 }
 
 func NewUserRepoGorm(db *gorm.DB, disable bool) UsersRepoGorm {
@@ -48,5 +48,10 @@ func (u UsersRepoGorm) GetAll(q *query.Query) (m []*models.User, errs []error) {
 
 func (u UsersRepoGorm) GetByID(id goat.ID, load bool) (m models.User, errs []error) {
 	errs = u.db.First(&m, "id = ?", id).GetErrors()
+	return
+}
+
+func (u UsersRepoGorm) Delete(id goat.ID) (errs []error) {
+	errs = u.db.Delete(&models.User{}, "id = ?", id).GetErrors()
 	return
 }

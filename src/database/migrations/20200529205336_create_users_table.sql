@@ -3,6 +3,7 @@ CREATE TABLE `users` (
   `name`       VARCHAR(120) COLLATE `utf8mb4_unicode_ci` NOT NULL,
   `email`      VARCHAR(120) COLLATE `utf8mb4_unicode_ci` NOT NULL UNIQUE,
   `password`   VARCHAR(120) COLLATE `utf8mb4_unicode_ci` NOT NULL,
+  `user_type`  VARCHAR(20) COLLATE `utf8mb4_unicode_ci`  NOT NULL DEFAULT "Free",
   `created_at` TIMESTAMP                                 NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP                                 NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` TIMESTAMP                                 NULL DEFAULT NULL,
