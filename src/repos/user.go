@@ -47,7 +47,11 @@ func (u UsersRepoGorm) GetAll(q *query.Query) (m []*models.User, errs []error) {
 }
 
 func (u UsersRepoGorm) GetByID(id goat.ID, load bool) (m models.User, errs []error) {
-	errs = u.db.First(&m, "id = ?", id).GetErrors()
+	q := u.db
+	if load {
+		q = q.Preload("Lessons")
+	}
+	errs = q.First(&m, "id = ?", id).GetErrors()
 	return
 }
 

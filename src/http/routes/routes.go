@@ -10,6 +10,7 @@ import (
 
 func InitRoutes(router http.Router, c app.ServiceContainer) {
 	userController := controllers.NewUserController(c.UserRepo, c.PasswordService, c.Errors)
+	lessonController := controllers.NewLessonController(c.LessonRepo, c.Errors)
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
 
@@ -20,9 +21,14 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 	users.POST("", goat.BindRequestMiddleware(controllers.CreateUserRequest{}), userController.Store)
 	users.POST("/:id", goat.BindRequestMiddleware(controllers.UpdateUserRequest{}), userController.Update)
 	users.DELETE("/:id", userController.Delete)
+	users.GET("/:id/lessons/:id")
+	users.GET("/:id/lessons/:id/revoke")
 
 	lessons := engine.Group("/lessons")
-	lessons.GET("")
+	lessons.GET("", lessonController.Index)
+	lessons.GET("/:id", lessonController.Show)
+	lessons.POST("", goat.BindRequestMiddleware(controllers.CreateLessonRequest{}), lessonController.Store)
+	lessons.POST("/:id", goat.BindRequestMiddleware(controllers.UpdateLessonRequest{}), lessonController.Update)
 }
 
 func Health(c *gin.Context) {

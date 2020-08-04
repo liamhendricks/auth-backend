@@ -170,3 +170,11 @@ func (u *UserController) Store(c *gin.Context) {
 
 	goat.RespondCreated(c, userResponse{User: user})
 }
+
+func (u *UserController) AttachLesson(c *gin.Context) {
+
+}
+
+func (u *UserController) RevokeLesson(c *gin.Context) {
+
+}

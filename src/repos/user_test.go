@@ -53,7 +53,7 @@ func TestUsersRepoUniqueEmail(t *testing.T) {
 func TestUsersRepoGetAll(t *testing.T) {
 	u, errs := tc.UserRepo.GetAll(&query.Query{})
 	require.Empty(t, errs)
-	require.GreaterOrEqual(t, len(u), 0)
+	require.GreaterOrEqual(t, len(u), 1)
 }
 
 func TestUsersRepoDelete(t *testing.T) {

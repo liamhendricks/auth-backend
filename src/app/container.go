@@ -13,6 +13,7 @@ type ServiceContainer struct {
 	DB              *gorm.DB
 	Logger          *logrus.Logger
 	UserRepo        repos.UserRepo
+	LessonRepo      repos.LessonRepo
 	PasswordService services.PasswordService
 	Errors          goat.ErrorHandler
 }
@@ -27,6 +28,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 
 	l := goat.GetLogger()
 	ur := repos.NewUserRepoGorm(db, false)
+	lr := repos.NewLessonRepoGorm(db)
 	eh := goat.NewErrorHandler(l)
 	ps := services.NewPasswordServiceAES(c.PasswordConfig)
 
@@ -35,6 +37,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 		DB:              db,
 		Logger:          l,
 		UserRepo:        ur,
+		LessonRepo:      lr,
 		Errors:          eh,
 		PasswordService: ps,
 	}

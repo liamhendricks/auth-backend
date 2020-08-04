@@ -14,11 +14,13 @@ var tc TestContainer
 var tf TestFixtures
 
 type TestFixtures struct {
-	Users []models.User
+	Users   []models.User
+	Lessons []*models.Lesson
 }
 
 type TestContainer struct {
-	UserRepo UserRepo
+	UserRepo   UserRepo
+	LessonRepo LessonRepo
 }
 
 func TestMain(m *testing.M) {
@@ -26,8 +28,10 @@ func TestMain(m *testing.M) {
 	db := initRepoTestDB()
 
 	r := NewUserRepoGorm(db, false)
+	l := NewLessonRepoGorm(db)
 	tc = TestContainer{
-		UserRepo: r,
+		UserRepo:   r,
+		LessonRepo: l,
 	}
 
 	seedTests(5, db)
@@ -45,7 +49,6 @@ func initRepoTestDB() *gorm.DB {
 		Password:        "secret",
 		MultiStatements: false,
 	})
-
 	if err != nil {
 		panic(err)
 	}
@@ -65,14 +68,23 @@ func initRepoTestDB() *gorm.DB {
 
 func seedTests(num int, db *gorm.DB) {
 	var u []models.User
+	var l []*models.Lesson
+
+	for i := 0; i < num; i++ {
+		lesson := models.MakeLesson()
+		persistFixture(db, &lesson)
+		l = append(l, &lesson)
+	}
 
 	for i := 0; i < num; i++ {
 		user := models.MakeUser()
 		persistFixture(db, &user)
+		user.Lessons = l
 		u = append(u, user)
 	}
 
 	tf.Users = u
+	tf.Lessons = l
 }
 
 func persistFixture(db *gorm.DB, m interface{}) {

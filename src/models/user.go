@@ -10,7 +10,7 @@ type User struct {
 	Name     string    `json:"name" binding:"required"`
 	Email    string    `json:"email" binding:"required"`
 	Password string    `json:"password" binding:"required"`
-	Type     UserType  `json:"user_type" binding:"required"`
+	UserType UserType  `json:"user_type" binding:"required"`
 	Lessons  []*Lesson `gorm:"many2many:user_lessons;"`
 }
 
@@ -25,6 +25,6 @@ func MakeUser() User {
 		Name:     fake.FullName(),
 		Email:    fake.EmailAddress(),
 		Password: fake.Password(5, 16, true, true, true),
-		Type:     FreeUser,
+		UserType: FreeUser,
 	}
 }
