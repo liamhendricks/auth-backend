@@ -11,6 +11,7 @@ type LessonRepo interface {
 	Save(model *models.Lesson) (errs []error)
 	GetAll(q *query.Query) (m []*models.Lesson, errs []error)
 	GetByID(id goat.ID) (m models.Lesson, errs []error)
+	GetByName(name string) (m models.Lesson, errs []error)
 	Delete(id goat.ID) (errs []error)
 }
 
@@ -46,6 +47,11 @@ func (l LessonRepoGorm) GetAll(q *query.Query) (m []*models.Lesson, errs []error
 
 func (l LessonRepoGorm) GetByID(id goat.ID) (m models.Lesson, errs []error) {
 	errs = l.db.First(&m, "id = ?", id).GetErrors()
+	return
+}
+
+func (l LessonRepoGorm) GetByName(name string) (m models.Lesson, errs []error) {
+	errs = l.db.First(&m, "name = ?", name).GetErrors()
 	return
 }
 

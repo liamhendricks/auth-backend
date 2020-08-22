@@ -16,11 +16,14 @@ var tf TestFixtures
 type TestFixtures struct {
 	Users   []models.User
 	Lessons []*models.Lesson
+	Courses []*models.Course
 }
 
 type TestContainer struct {
 	UserRepo   UserRepo
 	LessonRepo LessonRepo
+	CourseRepo CourseRepo
+	ResetRepo  ResetRepo
 }
 
 func TestMain(m *testing.M) {
@@ -29,9 +32,13 @@ func TestMain(m *testing.M) {
 
 	r := NewUserRepoGorm(db, false)
 	l := NewLessonRepoGorm(db)
+	c := NewCourseRepoGorm(db)
+	rr := NewResetRepoGorm(db)
 	tc = TestContainer{
 		UserRepo:   r,
 		LessonRepo: l,
+		CourseRepo: c,
+		ResetRepo:  rr,
 	}
 
 	seedTests(5, db)
@@ -69,22 +76,42 @@ func initRepoTestDB() *gorm.DB {
 func seedTests(num int, db *gorm.DB) {
 	var u []models.User
 	var l []*models.Lesson
+	var fc []*models.Course
+	var pc []*models.Course
+
+	freeCourse := models.MakeCourse(true)
+	paidCourse := models.MakeCourse(false)
+	persistFixture(db, &freeCourse)
+	persistFixture(db, &paidCourse)
+	fc = append(fc, &freeCourse)
+	pc = append(pc, &paidCourse)
 
 	for i := 0; i < num; i++ {
 		lesson := models.MakeLesson()
+		if i%2 == 0 {
+			lesson.CourseID = freeCourse.ID
+		} else {
+			lesson.CourseID = paidCourse.ID
+		}
 		persistFixture(db, &lesson)
 		l = append(l, &lesson)
 	}
 
 	for i := 0; i < num; i++ {
 		user := models.MakeUser()
+		if i%2 == 0 {
+			user.Courses = fc
+		} else {
+			user.Courses = pc
+		}
 		persistFixture(db, &user)
-		user.Lessons = l
 		u = append(u, user)
 	}
 
 	tf.Users = u
 	tf.Lessons = l
+	tf.Courses = fc
+	tf.Courses = append(tf.Courses, pc...)
 }
 
 func persistFixture(db *gorm.DB, m interface{}) {

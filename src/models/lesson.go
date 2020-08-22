@@ -7,19 +7,12 @@ import (
 
 type Lesson struct {
 	goat.Model
-	Name       string     `json:"name" binding:"required"`
-	LessonType LessonType `json:"lesson_type" binding:"required"`
-	Users      []*User    `gorm:"many2many:user_lessons;"`
+	Name     string  `json:"name" binding:"required"`
+	CourseID goat.ID `json:"course_id"`
 }
-
-type LessonType string
-
-const FreeLesson LessonType = "Free"
-const PaidLesson LessonType = "Paid"
 
 func MakeLesson() Lesson {
 	return Lesson{
-		Name:       fake.Title(),
-		LessonType: FreeLesson,
+		Name: fake.Title(),
 	}
 }

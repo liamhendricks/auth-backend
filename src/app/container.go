@@ -14,6 +14,8 @@ type ServiceContainer struct {
 	Logger          *logrus.Logger
 	UserRepo        repos.UserRepo
 	LessonRepo      repos.LessonRepo
+	CourseRepo      repos.CourseRepo
+	ResetRepo       repos.ResetRepo
 	PasswordService services.PasswordService
 	Errors          goat.ErrorHandler
 }
@@ -29,6 +31,8 @@ func GetApp(c Config) (ServiceContainer, error) {
 	l := goat.GetLogger()
 	ur := repos.NewUserRepoGorm(db, false)
 	lr := repos.NewLessonRepoGorm(db)
+	cr := repos.NewCourseRepoGorm(db)
+	rr := repos.NewResetRepoGorm(db)
 	eh := goat.NewErrorHandler(l)
 	ps := services.NewPasswordServiceAES(c.PasswordConfig)
 
@@ -38,6 +42,8 @@ func GetApp(c Config) (ServiceContainer, error) {
 		Logger:          l,
 		UserRepo:        ur,
 		LessonRepo:      lr,
+		CourseRepo:      cr,
+		ResetRepo:       rr,
 		Errors:          eh,
 		PasswordService: ps,
 	}

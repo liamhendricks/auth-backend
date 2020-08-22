@@ -9,8 +9,14 @@ import (
 )
 
 func InitRoutes(router http.Router, c app.ServiceContainer) {
-	userController := controllers.NewUserController(c.UserRepo, c.PasswordService, c.Errors)
+	userController := controllers.NewUserController(c.UserRepo,
+		c.ResetRepo,
+		c.CourseRepo,
+		c.PasswordService,
+		c.Errors)
+
 	lessonController := controllers.NewLessonController(c.LessonRepo, c.Errors)
+	courseController := controllers.NewCourseController(c.CourseRepo, c.LessonRepo, c.Errors)
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
 
@@ -18,17 +24,59 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 	users := engine.Group("/users")
 	users.GET("", userController.Index)
 	users.GET("/:id", userController.Show)
-	users.POST("", goat.BindRequestMiddleware(controllers.CreateUserRequest{}), userController.Store)
-	users.POST("/:id", goat.BindRequestMiddleware(controllers.UpdateUserRequest{}), userController.Update)
+	users.GET("/:id/forgot", userController.ForgotPassword)
+	users.GET("/:id/courses", userController.UserCourses)
 	users.DELETE("/:id", userController.Delete)
-	users.GET("/:id/lessons/:id")
-	users.GET("/:id/lessons/:id/revoke")
 
+	users.POST("",
+		goat.BindRequestMiddleware(controllers.CreateUserRequest{}),
+		userController.Store)
+
+	users.POST("/:id",
+		goat.BindRequestMiddleware(controllers.UpdateUserRequest{}),
+		userController.Update)
+
+	users.POST("/:id/courses/attach",
+		goat.BindRequestMiddleware(controllers.AttachCourseRequest{}),
+		userController.AttachCourse)
+
+	users.POST("/:id/reset",
+		goat.BindRequestMiddleware(controllers.ResetPasswordRequest{}),
+		userController.ResetPassword)
+
+	users.POST("/:id/courses/revoke")
+
+	//lessons
 	lessons := engine.Group("/lessons")
 	lessons.GET("", lessonController.Index)
 	lessons.GET("/:id", lessonController.Show)
-	lessons.POST("", goat.BindRequestMiddleware(controllers.CreateLessonRequest{}), lessonController.Store)
-	lessons.POST("/:id", goat.BindRequestMiddleware(controllers.UpdateLessonRequest{}), lessonController.Update)
+	lessons.DELETE("/:id", lessonController.Delete)
+
+	lessons.POST("",
+		goat.BindRequestMiddleware(controllers.CreateLessonRequest{}),
+		lessonController.Store)
+
+	lessons.POST("/:id",
+		goat.BindRequestMiddleware(controllers.UpdateLessonRequest{}),
+		lessonController.Update)
+
+	//courses
+	courses := engine.Group("/courses")
+	courses.GET("", courseController.Index)
+	courses.GET("/:id", courseController.Show)
+	courses.DELETE("/:id", courseController.Delete)
+
+	courses.POST("",
+		goat.BindRequestMiddleware(controllers.CreateCourseRequest{}),
+		courseController.Store)
+
+	courses.POST("/:id",
+		goat.BindRequestMiddleware(controllers.UpdateCourseRequest{}),
+		courseController.Update)
+
+	courses.POST("/:id/lessons/attach",
+		goat.BindRequestMiddleware(controllers.AttachLessonRequest{}),
+		courseController.AttachLesson)
 }
 
 func Health(c *gin.Context) {
