@@ -11,6 +11,7 @@ type CourseRepo interface {
 	Save(model *models.Course) (errs []error)
 	GetAll(q *query.Query) (m []*models.Course, errs []error)
 	GetByID(id goat.ID, load bool) (m models.Course, errs []error)
+	GetByName(name string, load bool) (m models.Course, errs []error)
 	Delete(id goat.ID) (errs []error)
 }
 
@@ -50,6 +51,15 @@ func (c CourseRepoGorm) GetByID(id goat.ID, load bool) (m models.Course, errs []
 		q = q.Preload("Lessons").Preload("Users")
 	}
 	errs = q.First(&m, "id = ?", id).GetErrors()
+	return
+}
+
+func (c CourseRepoGorm) GetByName(name string, load bool) (m models.Course, errs []error) {
+	q := c.db
+	if load {
+		q = q.Preload("Lessons").Preload("Users")
+	}
+	errs = q.First(&m, "name = ?", name).GetErrors()
 	return
 }
 

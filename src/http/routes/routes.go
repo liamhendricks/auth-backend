@@ -15,8 +15,14 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		c.PasswordService,
 		c.Errors)
 
+	authController := controllers.NewAuthController(c.UserRepo,
+		c.PasswordService,
+		c.SessionService,
+		c.Errors)
+
 	lessonController := controllers.NewLessonController(c.LessonRepo, c.Errors)
 	courseController := controllers.NewCourseController(c.CourseRepo, c.LessonRepo, c.Errors)
+
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
 
@@ -44,7 +50,21 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		goat.BindRequestMiddleware(controllers.ResetPasswordRequest{}),
 		userController.ResetPassword)
 
-	users.POST("/:id/courses/revoke")
+	users.POST("/:id/courses/revoke",
+		goat.BindRequestMiddleware(controllers.RevokeCourseRequest{}),
+		userController.RevokeCourse)
+
+	//auth
+	auth := engine.Group("/auth")
+	auth.POST("/login",
+		goat.BindRequestMiddleware(controllers.LoginRequest{}),
+		authController.Login)
+	auth.POST("/logout",
+		goat.BindRequestMiddleware(controllers.LogoutRequest{}),
+		authController.Logout)
+	auth.POST("/check",
+		goat.BindRequestMiddleware(controllers.CheckSessionRequest{}),
+		authController.CheckSession)
 
 	//lessons
 	lessons := engine.Group("/lessons")

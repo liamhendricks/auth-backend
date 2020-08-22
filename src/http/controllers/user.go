@@ -48,6 +48,10 @@ type AttachCourseRequest struct {
 	CourseName string `json:"course_name"`
 }
 
+type RevokeCourseRequest struct {
+	CourseName string `json:"course_name"`
+}
+
 type ResetPasswordRequest struct {
 	Token    string `json:"token" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -212,9 +216,40 @@ func (u *UserController) UserCourses(c *gin.Context) {
 }
 
 func (u *UserController) ForgotPassword(c *gin.Context) {
-	//create security token
-	//save token with user id
-	//email password change confirmation link to update password page with security token / user id
+	i := c.Param("id")
+	id, err := goat.ParseID(i)
+	if err != nil {
+		u.errors.HandleErrorM(c, err, "failed to parse id: "+i, goat.RespondBadRequestError)
+		return
+	}
+
+	user, errs := u.userRepo.GetByID(id, false)
+	if len(errs) > 0 {
+		if goat.RecordNotFound(errs) {
+			u.errors.HandleErrorsM(c, errs, "user does not exist", goat.RespondNotFoundError)
+			return
+		} else {
+			u.errors.HandleErrorsM(c, errs, "failed to get user", goat.RespondServerError)
+			return
+		}
+	}
+
+	reset := models.Reset{
+		Token:      goat.NewID(),
+		UserID:     id,
+		Expiration: time.Now().Add(30 * time.Minute),
+	}
+
+	errs = u.resetRepo.Save(&reset)
+	if len(errs) > 0 {
+		u.errors.HandleErrorsM(c, errs, "failed to save reset", goat.RespondServerError)
+		return
+	}
+
+	//TODO: email service
+	//fire off email with link
+
+	goat.RespondMessage(c, fmt.Sprintf("reset password link has been sent to %s", user.Email))
 }
 
 func (u *UserController) ResetPassword(c *gin.Context) {
@@ -284,8 +319,109 @@ func (u *UserController) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	goat.RespondCreated(c, userResponse{User: user})
+	goat.RespondMessage(c, fmt.Sprintf("%s's password has been updated", user.Name))
 }
 
-func (u *UserController) AttachCourse(c *gin.Context) {}
-func (u *UserController) RevokeCourse(c *gin.Context) {}
+func (u *UserController) AttachCourse(c *gin.Context) {
+	i := c.Param("id")
+	id, err := goat.ParseID(i)
+	if err != nil {
+		u.errors.HandleErrorM(c, err, "failed to parse id: "+i, goat.RespondBadRequestError)
+		return
+	}
+
+	req, ok := goat.GetRequest(c).(*AttachCourseRequest)
+	if !ok {
+		u.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
+		return
+	}
+
+	user, errs := u.userRepo.GetByID(id, true)
+	if len(errs) > 0 {
+		if goat.RecordNotFound(errs) {
+			u.errors.HandleErrorsM(c, errs, "user does not exist", goat.RespondNotFoundError)
+			return
+		} else {
+			u.errors.HandleErrorsM(c, errs, "failed to get user", goat.RespondServerError)
+			return
+		}
+	}
+
+	course, errs := u.courseRepo.GetByName(req.CourseName, false)
+	if len(errs) > 0 {
+		if goat.RecordNotFound(errs) {
+			u.errors.HandleErrorsM(c, errs, "course does not exist", goat.RespondNotFoundError)
+			return
+		} else {
+			u.errors.HandleErrorsM(c, errs, "failed to get course", goat.RespondServerError)
+			return
+		}
+	}
+
+	user.Courses = append(user.Courses, &course)
+
+	errs = u.userRepo.Save(&user)
+	if len(errs) > 0 {
+		u.errors.HandleErrorsM(c, errs, "failed to save user", goat.RespondServerError)
+		return
+	}
+
+	goat.RespondMessage(c, fmt.Sprintf("%s has been added to %s's account", course.Name, user.Name))
+}
+
+func (u *UserController) RevokeCourse(c *gin.Context) {
+	i := c.Param("id")
+	id, err := goat.ParseID(i)
+	if err != nil {
+		u.errors.HandleErrorM(c, err, "failed to parse id: "+i, goat.RespondBadRequestError)
+		return
+	}
+
+	req, ok := goat.GetRequest(c).(*RevokeCourseRequest)
+	if !ok {
+		u.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
+		return
+	}
+
+	user, errs := u.userRepo.GetByID(id, true)
+	if len(errs) > 0 {
+		if goat.RecordNotFound(errs) {
+			u.errors.HandleErrorsM(c, errs, "user does not exist", goat.RespondNotFoundError)
+			return
+		} else {
+			u.errors.HandleErrorsM(c, errs, "failed to get user", goat.RespondServerError)
+			return
+		}
+	}
+
+	course, errs := u.courseRepo.GetByName(req.CourseName, false)
+	if len(errs) > 0 {
+		if goat.RecordNotFound(errs) {
+			u.errors.HandleErrorsM(c, errs, "course does not exist", goat.RespondNotFoundError)
+			return
+		} else {
+			u.errors.HandleErrorsM(c, errs, "failed to get course", goat.RespondServerError)
+			return
+		}
+	}
+
+	for k, c := range user.Courses {
+		if c.Name == req.CourseName {
+			user.Courses = revoke(k, user.Courses)
+			break
+		}
+	}
+
+	errs = u.userRepo.Save(&user)
+	if len(errs) > 0 {
+		u.errors.HandleErrorsM(c, errs, "failed to save user", goat.RespondServerError)
+		return
+	}
+
+	goat.RespondMessage(c, fmt.Sprintf("%s has been added to %s's account", course.Name, user.Name))
+}
+
+func revoke(key int, courses []*models.Course) []*models.Course {
+	courses[len(courses)-1], courses[key] = courses[key], courses[len(courses)-1]
+	return courses[:len(courses)-1]
+}

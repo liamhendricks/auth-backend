@@ -10,44 +10,51 @@ import (
 
 func TestCoursesRepoSave(t *testing.T) {
 	var l []*models.Lesson
-	l = append(l, tf.Lessons[0])
+	l = append(l, Tf.Lessons[0])
 	c := &models.Course{
-		Name:    "TestCourse",
+		Name:    "TesTcourse",
 		Lessons: l,
 	}
-	errs := tc.CourseRepo.Save(c)
+	errs := Tc.CourseRepo.Save(c)
 	require.Nil(t, errs)
-	theCourse, errs := tc.CourseRepo.GetByID(c.ID, true)
+	theCourse, errs := Tc.CourseRepo.GetByID(c.ID, true)
 	require.Equal(t, c.ID, theCourse.ID)
-	require.Equal(t, c.Lessons[0].ID, tf.Lessons[0].ID)
+	require.Equal(t, c.Lessons[0].ID, Tf.Lessons[0].ID)
 }
 
 func TestCoursessRepoUpdate(t *testing.T) {
-	c := tf.Courses[1]
+	c := Tf.Courses[1]
 	c.Name = "NewName"
-	errs := tc.CourseRepo.Save(c)
+	errs := Tc.CourseRepo.Save(c)
 	require.Nil(t, errs)
-	theCourse, errs := tc.CourseRepo.GetByID(c.ID, false)
+	theCourse, errs := Tc.CourseRepo.GetByID(c.ID, false)
 	require.Equal(t, c.ID, theCourse.ID)
 	require.Equal(t, theCourse.Name, "NewName")
 }
 
 func TestCoursesRepoGetByID(t *testing.T) {
-	id := tf.Courses[0].ID
-	Course, errs := tc.CourseRepo.GetByID(id, true)
+	id := Tf.Courses[0].ID
+	Course, errs := Tc.CourseRepo.GetByID(id, true)
 	require.Nil(t, errs)
 	require.Equal(t, id, Course.ID)
 }
 
+func TestCoursesRepoGetByName(t *testing.T) {
+	name := Tf.Courses[0].Name
+	Course, errs := Tc.CourseRepo.GetByName(name, true)
+	require.Nil(t, errs)
+	require.Equal(t, name, Course.Name)
+}
+
 func TestCoursesRepoGetAll(t *testing.T) {
-	c, errs := tc.CourseRepo.GetAll(&query.Query{})
+	c, errs := Tc.CourseRepo.GetAll(&query.Query{})
 	require.Empty(t, errs)
 	require.GreaterOrEqual(t, len(c), 1)
 }
 
 func TestGetUserCourses(t *testing.T) {
-	id := tf.Courses[0].ID
-	course, errs := tc.CourseRepo.GetByID(id, true)
+	id := Tf.Courses[0].ID
+	course, errs := Tc.CourseRepo.GetByID(id, true)
 	require.Empty(t, errs)
 	require.NotNil(t, course.Lessons)
 	for _, l := range course.Lessons {
@@ -56,9 +63,9 @@ func TestGetUserCourses(t *testing.T) {
 }
 
 func TestCoursesRepoDelete(t *testing.T) {
-	id := tf.Courses[1].ID
-	errs := tc.CourseRepo.Delete(id)
+	id := Tf.Courses[1].ID
+	errs := Tc.CourseRepo.Delete(id)
 	require.Empty(t, errs)
-	_, errs = tc.CourseRepo.GetByID(id, true)
+	_, errs = Tc.CourseRepo.GetByID(id, true)
 	require.NotNil(t, errs)
 }

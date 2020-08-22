@@ -12,6 +12,8 @@ type User struct {
 	Password string    `json:"password" binding:"required"`
 	UserType UserType  `json:"user_type" binding:"required"`
 	Courses  []*Course `gorm:"many2many:user_courses;"`
+	Session  *Session
+	Reset    *Reset
 }
 
 type UserType string

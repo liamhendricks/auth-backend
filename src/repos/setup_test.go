@@ -10,8 +10,8 @@ import (
 	"github.com/liamhendricks/auth-backend/src/models"
 )
 
-var tc TestContainer
-var tf TestFixtures
+var Tc TestContainer
+var Tf TestFixtures
 
 type TestFixtures struct {
 	Users   []models.User
@@ -20,10 +20,11 @@ type TestFixtures struct {
 }
 
 type TestContainer struct {
-	UserRepo   UserRepo
-	LessonRepo LessonRepo
-	CourseRepo CourseRepo
-	ResetRepo  ResetRepo
+	UserRepo    UserRepo
+	LessonRepo  LessonRepo
+	SessionRepo SessionRepo
+	CourseRepo  CourseRepo
+	ResetRepo   ResetRepo
 }
 
 func TestMain(m *testing.M) {
@@ -32,13 +33,15 @@ func TestMain(m *testing.M) {
 
 	r := NewUserRepoGorm(db, false)
 	l := NewLessonRepoGorm(db)
+	sr := NewSessionRepoGorm(db)
 	c := NewCourseRepoGorm(db)
 	rr := NewResetRepoGorm(db)
-	tc = TestContainer{
-		UserRepo:   r,
-		LessonRepo: l,
-		CourseRepo: c,
-		ResetRepo:  rr,
+	Tc = TestContainer{
+		UserRepo:    r,
+		LessonRepo:  l,
+		CourseRepo:  c,
+		SessionRepo: sr,
+		ResetRepo:   rr,
 	}
 
 	seedTests(5, db)
@@ -108,10 +111,10 @@ func seedTests(num int, db *gorm.DB) {
 		u = append(u, user)
 	}
 
-	tf.Users = u
-	tf.Lessons = l
-	tf.Courses = fc
-	tf.Courses = append(tf.Courses, pc...)
+	Tf.Users = u
+	Tf.Lessons = l
+	Tf.Courses = fc
+	Tf.Courses = append(Tf.Courses, pc...)
 }
 
 func persistFixture(db *gorm.DB, m interface{}) {

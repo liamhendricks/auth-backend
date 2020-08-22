@@ -11,48 +11,48 @@ import (
 func TestLessonsRepoSave(t *testing.T) {
 	l := &models.Lesson{
 		Name:     "TestLesson",
-		CourseID: tf.Courses[0].ID,
+		CourseID: Tf.Courses[0].ID,
 	}
-	errs := tc.LessonRepo.Save(l)
+	errs := Tc.LessonRepo.Save(l)
 	require.Nil(t, errs)
-	theLesson, errs := tc.LessonRepo.GetByID(l.ID)
+	theLesson, errs := Tc.LessonRepo.GetByID(l.ID)
 	require.Equal(t, l.ID, theLesson.ID)
 }
 
 func TestLessonssRepoUpdate(t *testing.T) {
-	l := tf.Lessons[1]
+	l := Tf.Lessons[1]
 	l.Name = "NewName"
-	errs := tc.LessonRepo.Save(l)
+	errs := Tc.LessonRepo.Save(l)
 	require.Nil(t, errs)
-	theLesson, errs := tc.LessonRepo.GetByID(l.ID)
+	theLesson, errs := Tc.LessonRepo.GetByID(l.ID)
 	require.Equal(t, l.ID, theLesson.ID)
 	require.Equal(t, theLesson.Name, "NewName")
 }
 
 func TestLessonsRepoGetByID(t *testing.T) {
-	id := tf.Lessons[0].ID
-	lesson, errs := tc.LessonRepo.GetByID(id)
+	id := Tf.Lessons[0].ID
+	lesson, errs := Tc.LessonRepo.GetByID(id)
 	require.Nil(t, errs)
 	require.Equal(t, id, lesson.ID)
 }
 
 func TestLessonsRepoGetByName(t *testing.T) {
-	name := tf.Lessons[0].Name
-	lesson, errs := tc.LessonRepo.GetByName(name)
+	name := Tf.Lessons[0].Name
+	lesson, errs := Tc.LessonRepo.GetByName(name)
 	require.Nil(t, errs)
 	require.Equal(t, name, lesson.Name)
 }
 
 func TestLessonsRepoGetAll(t *testing.T) {
-	l, errs := tc.LessonRepo.GetAll(&query.Query{})
+	l, errs := Tc.LessonRepo.GetAll(&query.Query{})
 	require.Empty(t, errs)
 	require.GreaterOrEqual(t, len(l), 1)
 }
 
 func TestLessonsRepoDelete(t *testing.T) {
-	id := tf.Lessons[2].ID
-	errs := tc.LessonRepo.Delete(id)
+	id := Tf.Lessons[2].ID
+	errs := Tc.LessonRepo.Delete(id)
 	require.Empty(t, errs)
-	_, errs = tc.LessonRepo.GetByID(id)
+	_, errs = Tc.LessonRepo.GetByID(id)
 	require.NotNil(t, errs)
 }

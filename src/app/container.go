@@ -17,6 +17,7 @@ type ServiceContainer struct {
 	CourseRepo      repos.CourseRepo
 	ResetRepo       repos.ResetRepo
 	PasswordService services.PasswordService
+	SessionService  services.SessionService
 	Errors          goat.ErrorHandler
 }
 
@@ -33,8 +34,10 @@ func GetApp(c Config) (ServiceContainer, error) {
 	lr := repos.NewLessonRepoGorm(db)
 	cr := repos.NewCourseRepoGorm(db)
 	rr := repos.NewResetRepoGorm(db)
+	sr := repos.NewSessionRepoGorm(db)
 	eh := goat.NewErrorHandler(l)
 	ps := services.NewPasswordServiceAES(c.PasswordConfig)
+	ss := services.NewSessionServiceDB(sr)
 
 	container = ServiceContainer{
 		Config:          c,
@@ -46,6 +49,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 		ResetRepo:       rr,
 		Errors:          eh,
 		PasswordService: ps,
+		SessionService:  ss,
 	}
 
 	return container, nil
