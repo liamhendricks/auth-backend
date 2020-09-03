@@ -7,29 +7,12 @@ import (
 )
 
 func TestEcryption(t *testing.T) {
-	s := NewPasswordServiceAES(PasswordConfig{
-		PassPhrase: "test_phrase",
-	})
+	s := NewPasswordServiceBcrypt()
 	password := "password"
-	data, err := s.Encrypt([]byte(password))
+	data, err := s.Hash([]byte(password))
 	require.Nil(t, err)
 	require.NotEqual(t, data, password)
 
-	plaintext, err := s.Decrypt(data)
-	require.Nil(t, err)
-	require.Equal(t, password, string(plaintext))
-}
-
-func TestEcryptionBadPhrase(t *testing.T) {
-	s := NewPasswordServiceAES(PasswordConfig{
-		PassPhrase: "first_phrase",
-	})
-	password := "password"
-	data, err := s.Encrypt([]byte(password))
-	require.Nil(t, err)
-	require.NotEqual(t, data, password)
-
-	s.passPhrase = "second_phrase"
-	_, err = s.Decrypt(data)
-	require.NotNil(t, err)
+	equal := s.Compare(string(data), password)
+	require.Equal(t, equal, true)
 }

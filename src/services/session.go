@@ -27,12 +27,18 @@ func NewSessionServiceDB(sr repos.SessionRepo) SessionServiceDB {
 }
 
 func (ss SessionServiceDB) Start(user *models.User) error {
-	//TODO: configurable session length
-	token := goat.NewID()
-	s := &models.Session{
-		Token:      token,
-		UserID:     user.ID,
-		Expiration: time.Now().Add(20 * time.Minute),
+	var s *models.Session
+	if user.Session != nil {
+		user.Session.Expiration = time.Now().Add(20 * time.Minute)
+		s = user.Session
+	} else {
+		//TODO: configurable session length
+		token := goat.NewID()
+		s = &models.Session{
+			Token:      token,
+			UserID:     user.ID,
+			Expiration: time.Now().Add(20 * time.Minute),
+		}
 	}
 
 	errs := ss.sessionRepo.Save(s)

@@ -33,23 +33,22 @@ func NewAuthController(
 
 type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
-	Username string `json:"username"`
+	Name     string `json:"username"`
 	Email    string `json:"email"`
 }
 
 type LogoutRequest struct {
-	Username     string `json:"username" binding:"required"`
+	Name         string `json:"username" binding:"required"`
 	SessionToken string `json:"session_token" binding:"required"`
 }
 
 type CheckSessionRequest struct {
-	Username     string `json:"username" binding:"required"`
+	Name         string `json:"username" binding:"required"`
 	SessionToken string `json:"session_token" binding:"required"`
 }
 
 type sessionResponse struct {
 	models.User
-	SessionToken string
 }
 
 func (ac *AuthController) Login(c *gin.Context) {
@@ -59,11 +58,11 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	user, errs := ac.userRepo.GetByNameOrEmail(req.Username, req.Email, true)
+	user, errs := ac.userRepo.GetByNameOrEmail(req.Name, req.Email, true)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
 			ac.errors.HandleContext(c,
-				fmt.Sprintf("could not find user with name: %s or email: %s", req.Username, req.Email),
+				fmt.Sprintf("could not find user with name: %s or email: %s", req.Name, req.Email),
 				goat.RespondAuthenticationError)
 			return
 		} else {
@@ -72,14 +71,9 @@ func (ac *AuthController) Login(c *gin.Context) {
 		}
 	}
 
-	pw, err := ac.passWordService.Decrypt([]byte(user.Password))
-	if err != nil {
-		ac.errors.HandleMessage(c, "could not get saved password", goat.RespondBadRequestError)
-		return
-	}
-
-	if string(pw) == req.Password {
-		err = ac.sessionService.Start(&user)
+	valid := ac.passWordService.Compare(user.Password, req.Password)
+	if valid {
+		err := ac.sessionService.Start(&user)
 		if err != nil {
 			ac.errors.HandleMessage(c, "error starting session", goat.RespondServerError)
 			return
@@ -87,7 +81,6 @@ func (ac *AuthController) Login(c *gin.Context) {
 
 		goat.RespondData(c, sessionResponse{
 			user,
-			user.Session.Token.String(),
 		})
 		return
 	} else {
@@ -103,11 +96,11 @@ func (ac *AuthController) Logout(c *gin.Context) {
 		return
 	}
 
-	user, errs := ac.userRepo.GetByNameOrEmail(req.Username, "", true)
+	user, errs := ac.userRepo.GetByNameOrEmail(req.Name, "", true)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
 			ac.errors.HandleContext(c,
-				fmt.Sprintf("could not find user with name: %s", req.Username),
+				fmt.Sprintf("could not find user with name: %s", req.Name),
 				goat.RespondAuthenticationError)
 			return
 		} else {
@@ -130,11 +123,11 @@ func (ac *AuthController) CheckSession(c *gin.Context) {
 		return
 	}
 
-	user, errs := ac.userRepo.GetByNameOrEmail(req.Username, "", true)
+	user, errs := ac.userRepo.GetByNameOrEmail(req.Name, "", true)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
 			ac.errors.HandleContext(c,
-				fmt.Sprintf("could not find user with name: %s", req.Username),
+				fmt.Sprintf("could not find user with name: %s", req.Name),
 				goat.RespondAuthenticationError)
 			return
 		} else {
@@ -164,6 +157,5 @@ func (ac *AuthController) CheckSession(c *gin.Context) {
 
 	goat.RespondData(c, sessionResponse{
 		user,
-		user.Session.Token.String(),
 	})
 }

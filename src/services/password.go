@@ -1,77 +1,38 @@
 package services
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/md5"
-	"crypto/rand"
-	"encoding/hex"
-	"io"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type PasswordService interface {
-	Encrypt(data []byte) ([]byte, error)
-	Decrypt(data []byte) ([]byte, error)
+	Hash(data []byte) ([]byte, error)
+	Compare(data, plain string) bool
 }
 
-type PasswordServiceAES struct {
-	passPhrase string
+type PasswordServiceBcrypt struct {
+	cost int
 }
 
-type PasswordConfig struct {
-	PassPhrase string
-}
-
-func NewPasswordServiceAES(c PasswordConfig) PasswordServiceAES {
-	return PasswordServiceAES{
-		passPhrase: c.PassPhrase,
+func NewPasswordServiceBcrypt() PasswordServiceBcrypt {
+	return PasswordServiceBcrypt{
+		cost: bcrypt.MinCost,
 	}
 }
 
-func getHash(key string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(key))
-	return hex.EncodeToString(hasher.Sum(nil))
-}
-
-func (s PasswordServiceAES) Encrypt(data []byte) ([]byte, error) {
-	block, err := aes.NewCipher([]byte(getHash(s.passPhrase)))
+func (s PasswordServiceBcrypt) Hash(data []byte) ([]byte, error) {
+	hash, err := bcrypt.GenerateFromPassword(data, s.cost)
 	if err != nil {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	ciphertext := gcm.Seal(nonce, nonce, data, nil)
-	return ciphertext, nil
+	return hash, nil
 }
 
-func (s PasswordServiceAES) Decrypt(data []byte) ([]byte, error) {
-	key := []byte(getHash(s.passPhrase))
-	block, err := aes.NewCipher(key)
+func (s PasswordServiceBcrypt) Compare(data, plain string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(data), []byte(plain))
 	if err != nil {
-		return nil, err
+		return false
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonceSize := gcm.NonceSize()
-	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return plaintext, nil
+	return true
 }

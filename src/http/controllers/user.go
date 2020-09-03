@@ -35,13 +35,17 @@ func NewUserController(
 }
 
 type CreateUserRequest struct {
-	models.User
+	Name     string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	UserType string `json:"user_type" binding:"required"`
 }
 
 type UpdateUserRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name     string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	UserType string `json:"user_type" binding:"required"`
 }
 
 type AttachCourseRequest struct {
@@ -131,7 +135,7 @@ func (u *UserController) Update(c *gin.Context) {
 	}
 
 	if req.Password != "" {
-		p, err := u.password.Encrypt([]byte(req.Password))
+		p, err := u.password.Hash([]byte(req.Password))
 		if err != nil {
 			u.errors.HandleErrorM(c, err, "cant handle password", goat.RespondServerError)
 			return
@@ -172,7 +176,7 @@ func (u *UserController) Store(c *gin.Context) {
 		return
 	}
 
-	p, err := u.password.Encrypt([]byte(req.Password))
+	p, err := u.password.Hash([]byte(req.Password))
 	if err != nil {
 		u.errors.HandleErrorM(c, err, "cant handle password", goat.RespondServerError)
 		return
@@ -299,7 +303,7 @@ func (u *UserController) ResetPassword(c *gin.Context) {
 		}
 	}
 
-	p, err := u.password.Encrypt([]byte(req.Password))
+	p, err := u.password.Hash([]byte(req.Password))
 	if err != nil {
 		u.errors.HandleErrorM(c, err, "cant handle password", goat.RespondServerError)
 		return

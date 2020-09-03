@@ -59,9 +59,9 @@ func (u UsersRepoGorm) GetByID(id goat.ID, load bool) (m models.User, errs []err
 func (u UsersRepoGorm) GetByNameOrEmail(username, email string, load bool) (m models.User, errs []error) {
 	q := u.db
 	if load {
-		q = q.Preload("Courses")
+		q = q.Preload("Courses").Preload("Session").Preload("Reset")
 	}
-	errs = q.First(&m, "user_name = ? or email = ?", username, email).GetErrors()
+	errs = q.First(&m, "name = ? or email = ?", username, email).GetErrors()
 	return
 }
 

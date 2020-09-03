@@ -36,7 +36,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 	rr := repos.NewResetRepoGorm(db)
 	sr := repos.NewSessionRepoGorm(db)
 	eh := goat.NewErrorHandler(l)
-	ps := services.NewPasswordServiceAES(c.PasswordConfig)
+	ps := services.NewPasswordServiceBcrypt()
 	ss := services.NewSessionServiceDB(sr)
 
 	container = ServiceContainer{
