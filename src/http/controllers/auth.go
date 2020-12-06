@@ -47,6 +47,7 @@ type CheckSessionRequest struct {
 	SessionToken string `json:"session_token" binding:"required"`
 }
 
+//TODO: session should be handled with HttpOnly cookie
 type sessionResponse struct {
 	models.User
 }

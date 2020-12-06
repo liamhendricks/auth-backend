@@ -1,6 +1,6 @@
 CREATE TABLE `users` (
   `id`         BINARY(16)		                             NOT NULL,
-  `name`       VARCHAR(120) COLLATE `utf8mb4_unicode_ci` NOT NULL,
+  `name`       VARCHAR(120) COLLATE `utf8mb4_unicode_ci` NOT NULL UNIQUE,
   `email`      VARCHAR(120) COLLATE `utf8mb4_unicode_ci` NOT NULL UNIQUE,
   `password`   VARCHAR(120) COLLATE `utf8mb4_unicode_ci` NOT NULL,
   `user_type`  VARCHAR(20)  COLLATE `utf8mb4_unicode_ci` NOT NULL DEFAULT "Free",

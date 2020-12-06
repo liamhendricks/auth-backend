@@ -7,12 +7,14 @@ import (
 
 type Lesson struct {
 	goat.Model
-	Name     string  `json:"name" binding:"required"`
-	CourseID goat.ID `json:"course_id"`
+	Name       string  `json:"name" binding:"required"`
+	LessonData string  `json:"lesson_data"`
+	CourseID   goat.ID `json:"course_id"`
 }
 
 func MakeLesson() Lesson {
 	return Lesson{
-		Name: fake.Title(),
+		Name:       fake.Title(),
+		LessonData: `{"foo":"bar"}`,
 	}
 }

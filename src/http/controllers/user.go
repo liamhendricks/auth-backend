@@ -182,15 +182,22 @@ func (u *UserController) Store(c *gin.Context) {
 		return
 	}
 
+	userType, err := models.UserTypeFromString(req.UserType)
+	if err != nil {
+		u.errors.HandleErrorM(c, err, "incorrect user type", goat.RespondBadRequestError)
+		return
+	}
+
 	user := models.User{
 		Name:     req.Name,
 		Email:    req.Email,
+		UserType: userType,
 		Password: string(p),
 	}
 
 	errs := u.userRepo.Save(&user)
 	if len(errs) > 0 {
-		u.errors.HandleErrorsM(c, errs, "failed to save user", goat.RespondBadRequestError)
+		u.errors.HandleErrorsM(c, errs, "failed to save user", goat.RespondServerError)
 		return
 	}
 

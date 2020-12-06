@@ -30,6 +30,9 @@ migrate: build
 migration: build
 	docker-compose run --rm api ./api make:migration $(name)
 
+seed: build
+	docker-compose run --rm api ./api seed $(SEED_ARG)
+
 db-browse:
 	docker-compose exec auth_db mysql -uroot -psecret
 
