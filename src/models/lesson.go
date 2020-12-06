@@ -12,9 +12,10 @@ type Lesson struct {
 	CourseID   goat.ID `json:"course_id"`
 }
 
-func MakeLesson() Lesson {
+func MakeLesson(id goat.ID) Lesson {
 	return Lesson{
 		Name:       fake.Title(),
 		LessonData: `{"foo":"bar"}`,
+		CourseID:   id,
 	}
 }

@@ -9,11 +9,8 @@ import (
 )
 
 func TestLessonsRepoSave(t *testing.T) {
-	l := &models.Lesson{
-		Name:     "TestLesson",
-		CourseID: Tf.Courses[0].ID,
-	}
-	errs := Tc.LessonRepo.Save(l)
+	l := models.MakeLesson(Tf.Courses[0].ID)
+	errs := Tc.LessonRepo.Save(&l)
 	require.Nil(t, errs)
 	theLesson, errs := Tc.LessonRepo.GetByID(l.ID)
 	require.Equal(t, l.ID, theLesson.ID)

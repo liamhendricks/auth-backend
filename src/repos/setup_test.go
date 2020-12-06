@@ -90,12 +90,13 @@ func seedTests(num int, db *gorm.DB) {
 	pc = append(pc, &paidCourse)
 
 	for i := 0; i < num; i++ {
-		lesson := models.MakeLesson()
+		var lesson models.Lesson
 		if i%2 == 0 {
-			lesson.CourseID = freeCourse.ID
+			lesson = models.MakeLesson(freeCourse.ID)
 		} else {
-			lesson.CourseID = paidCourse.ID
+			lesson = models.MakeLesson(paidCourse.ID)
 		}
+
 		persistFixture(db, &lesson)
 		l = append(l, &lesson)
 	}
@@ -107,6 +108,7 @@ func seedTests(num int, db *gorm.DB) {
 		} else {
 			user.Courses = pc
 		}
+
 		persistFixture(db, &user)
 		u = append(u, user)
 	}
