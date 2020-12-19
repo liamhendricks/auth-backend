@@ -50,7 +50,18 @@ func NewCourseController(
 }
 
 func (cc *CourseController) Index(c *gin.Context) {
-	courses, errs := cc.courseRepo.GetAll(&query.Query{})
+	var q query.Query
+	qp := c.Request.URL.Query()
+
+	if _, ok := qp["with_users"]; ok {
+		q.Preload = append(q.Preload, "Users")
+	}
+
+	if _, ok := qp["with_lessons"]; ok {
+		q.Preload = append(q.Preload, "Lessons")
+	}
+
+	courses, errs := cc.courseRepo.GetAll(&q)
 	if len(errs) > 0 {
 		goat.RespondServerErrors(c, errs)
 		return

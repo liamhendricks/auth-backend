@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/liamhendricks/auth-backend/src/app"
 	"github.com/liamhendricks/auth-backend/src/http/controllers"
+	"github.com/liamhendricks/auth-backend/src/http/middleware"
+	"github.com/liamhendricks/auth-backend/src/models"
 )
 
 func InitRoutes(router http.Router, c app.ServiceContainer) {
@@ -20,7 +22,7 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		c.SessionService,
 		c.Errors)
 
-	lessonController := controllers.NewLessonController(c.LessonRepo, c.Errors)
+	lessonController := controllers.NewLessonController(c.LessonRepo, c.CourseRepo, c.Errors)
 	courseController := controllers.NewCourseController(c.CourseRepo, c.LessonRepo, c.Errors)
 
 	engine := router.GetEngine()
@@ -28,12 +30,11 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 
 	//users
 	users := engine.Group("/users")
-	users.GET("", userController.Index)
 	users.GET("/:id", userController.Show)
 	users.GET("/:id/forgot", userController.ForgotPassword)
-	users.GET("/:id/courses", userController.UserCourses)
 	users.DELETE("/:id", userController.Delete)
 
+	users.GET("/:id/courses", userController.UserCourses)
 	users.POST("",
 		goat.BindRequestMiddleware(controllers.CreateUserRequest{}),
 		userController.Store)
@@ -66,37 +67,46 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		goat.BindRequestMiddleware(controllers.CheckSessionRequest{}),
 		authController.CheckSession)
 
-	//lessons
-	lessons := engine.Group("/lessons")
-	lessons.GET("", lessonController.Index)
-	lessons.GET("/:id", lessonController.Show)
-	lessons.DELETE("/:id", lessonController.Delete)
+	//api endpoints, must be admin
+	api := engine.Group("/api")
+	api.Use(middleware.RequireAuth(c.Errors, c.UserRepo, c.SessionService, c.PasswordService, models.AdminUser))
+	{
+		//users
+		users = api.Group("/users")
+		users.GET("", userController.Index)
 
-	lessons.POST("",
-		goat.BindRequestMiddleware(controllers.CreateLessonRequest{}),
-		lessonController.Store)
+		//lessons
+		lessons := api.Group("/lessons")
+		lessons.GET("", lessonController.Index)
+		lessons.GET("/:id", lessonController.Show)
+		lessons.DELETE("/:id", lessonController.Delete)
 
-	lessons.POST("/:id",
-		goat.BindRequestMiddleware(controllers.UpdateLessonRequest{}),
-		lessonController.Update)
+		lessons.POST("",
+			goat.BindRequestMiddleware(controllers.CreateLessonRequest{}),
+			lessonController.Store)
 
-	//courses
-	courses := engine.Group("/courses")
-	courses.GET("", courseController.Index)
-	courses.GET("/:id", courseController.Show)
-	courses.DELETE("/:id", courseController.Delete)
+		lessons.POST("/:id",
+			goat.BindRequestMiddleware(controllers.UpdateLessonRequest{}),
+			lessonController.Update)
 
-	courses.POST("",
-		goat.BindRequestMiddleware(controllers.CreateCourseRequest{}),
-		courseController.Store)
+		//courses
+		courses := api.Group("/courses")
+		courses.GET("", courseController.Index)
+		courses.GET("/:id", courseController.Show)
+		courses.DELETE("/:id", courseController.Delete)
 
-	courses.POST("/:id",
-		goat.BindRequestMiddleware(controllers.UpdateCourseRequest{}),
-		courseController.Update)
+		courses.POST("",
+			goat.BindRequestMiddleware(controllers.CreateCourseRequest{}),
+			courseController.Store)
 
-	courses.POST("/:id/lessons/attach",
-		goat.BindRequestMiddleware(controllers.AttachLessonRequest{}),
-		courseController.AttachLesson)
+		courses.POST("/:id",
+			goat.BindRequestMiddleware(controllers.UpdateCourseRequest{}),
+			courseController.Update)
+
+		courses.POST("/:id/lessons/attach",
+			goat.BindRequestMiddleware(controllers.AttachLessonRequest{}),
+			courseController.AttachLesson)
+	}
 }
 
 func Health(c *gin.Context) {

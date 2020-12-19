@@ -43,5 +43,30 @@ func UserTypeFromString(t string) (UserType, error) {
 	if t == string(PaidUser) {
 		return PaidUser, nil
 	}
+
 	return UserType(""), errors.New("not a valid user type")
+}
+
+func (t UserType) IsGreaterThanEqTo(v UserType) bool {
+	var pass []UserType
+	switch t {
+	case FreeUser:
+		pass = []UserType{FreeUser}
+	case PaidUser:
+		pass = []UserType{FreeUser, PaidUser}
+	case AdminUser:
+		pass = []UserType{FreeUser, PaidUser, AdminUser}
+	}
+
+	return userTypeInSlice(v, pass)
+}
+
+func userTypeInSlice(a UserType, list []UserType) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+
+	return false
 }

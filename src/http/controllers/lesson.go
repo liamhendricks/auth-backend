@@ -13,6 +13,7 @@ import (
 
 type LessonController struct {
 	lessonRepo repos.LessonRepo
+	courseRepo repos.CourseRepo
 	password   services.PasswordService
 	errors     goat.ErrorHandler
 }
@@ -26,18 +27,21 @@ type lessonResponse struct {
 }
 
 type CreateLessonRequest struct {
-	Name     string `json:"name" binding:"required"`
-	CourseID string `json:"course_id" binding:"required"`
+	Name       string `json:"name" binding:"required"`
+	CourseID   string `json:"course_id" binding:"required"`
+	LessonData string `json:"lesson_data"`
 }
 
 type UpdateLessonRequest struct {
-	Name     string `json:"name" binding:"required"`
-	CourseID string `json:"course_id"`
+	Name       string `json:"name"`
+	CourseID   string `json:"course_id"`
+	LessonData string `json:"lesson_data"`
 }
 
-func NewLessonController(lr repos.LessonRepo, es goat.ErrorHandler) LessonController {
+func NewLessonController(lr repos.LessonRepo, cr repos.CourseRepo, es goat.ErrorHandler) LessonController {
 	return LessonController{
 		lessonRepo: lr,
+		courseRepo: cr,
 		errors:     es,
 	}
 }
@@ -87,8 +91,9 @@ func (lc *LessonController) Store(c *gin.Context) {
 	}
 
 	lesson := models.Lesson{
-		Name:     req.Name,
-		CourseID: id,
+		Name:       req.Name,
+		CourseID:   id,
+		LessonData: req.LessonData,
 	}
 
 	errs := lc.lessonRepo.Save(&lesson)
@@ -119,17 +124,32 @@ func (lc *LessonController) Update(c *gin.Context) {
 			lc.errors.HandleErrorsM(c, errs, "lesson does not exist", goat.RespondNotFoundError)
 			return
 		} else {
-			lc.errors.HandleErrorsM(c, errs, "failed to get user", goat.RespondServerError)
+			lc.errors.HandleErrorsM(c, errs, "failed to get lesson", goat.RespondServerError)
 			return
 		}
 	}
 
 	lesson.Name = req.Name
 
+	//validate or marshall not sure atm
+	lesson.LessonData = req.LessonData
+
 	courseID, err := goat.ParseID(req.CourseID)
-	if err == nil {
-		lesson.CourseID = courseID
+	if err != nil {
+		lc.errors.HandleErrorM(c, err, "failed to parse id: "+req.CourseID, goat.RespondBadRequestError)
+		return
 	}
+	course, errs := lc.courseRepo.GetByID(courseID, false)
+	if len(errs) > 0 {
+		if goat.RecordNotFound(errs) {
+			lc.errors.HandleErrorsM(c, errs, "course does not exist", goat.RespondNotFoundError)
+			return
+		} else {
+			lc.errors.HandleErrorsM(c, errs, "failed to get course", goat.RespondServerError)
+			return
+		}
+	}
+	lesson.CourseID = course.ID
 
 	errs = lc.lessonRepo.Save(&lesson)
 	if len(errs) > 0 {

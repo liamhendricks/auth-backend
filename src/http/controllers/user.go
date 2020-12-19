@@ -70,7 +70,14 @@ type userResponse struct {
 }
 
 func (u *UserController) Index(c *gin.Context) {
-	users, errs := u.userRepo.GetAll(&query.Query{})
+	var q query.Query
+	qp := c.Request.URL.Query()
+
+	if _, ok := qp["with_courses"]; ok {
+		q.Preload = append(q.Preload, "Courses")
+	}
+
+	users, errs := u.userRepo.GetAll(&q)
 	if len(errs) > 0 {
 		goat.RespondServerErrors(c, errs)
 		return
