@@ -139,6 +139,7 @@ func (lc *LessonController) Update(c *gin.Context) {
 		lc.errors.HandleErrorM(c, err, "failed to parse id: "+req.CourseID, goat.RespondBadRequestError)
 		return
 	}
+
 	course, errs := lc.courseRepo.GetByID(courseID, false)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
@@ -149,6 +150,7 @@ func (lc *LessonController) Update(c *gin.Context) {
 			return
 		}
 	}
+
 	lesson.CourseID = course.ID
 
 	errs = lc.lessonRepo.Save(&lesson)
@@ -157,7 +159,7 @@ func (lc *LessonController) Update(c *gin.Context) {
 		return
 	}
 
-	goat.RespondCreated(c, lessonResponse{Lesson: lesson})
+	goat.RespondMessage(c, fmt.Sprintf("ID: %s has been updated", lesson.ID.String()))
 }
 
 func (lc *LessonController) Delete(c *gin.Context) {

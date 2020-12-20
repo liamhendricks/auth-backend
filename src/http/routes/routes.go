@@ -28,28 +28,34 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
 
-	//users
+	//user endpoints, must be self
 	users := engine.Group("/users")
-	users.GET("/:id", userController.Show)
-	users.GET("/:id/forgot", userController.ForgotPassword)
-	users.DELETE("/:id", userController.Delete)
+	users.Use(middleware.RequireSelf(c.Errors, c.UserRepo, c.SessionService))
+	{
+		users.GET("/:id", userController.Show)
+		users.GET("/:id/forgot", userController.ForgotPassword)
+		users.DELETE("/:id", userController.Delete)
 
-	users.GET("/:id/courses", userController.UserCourses)
+		users.GET("/:id/courses", userController.UserCourses)
+
+		users.POST("/:id",
+			goat.BindRequestMiddleware(controllers.UpdateUserRequest{}),
+			userController.Update)
+
+		users.POST("/:id/reset",
+			goat.BindRequestMiddleware(controllers.ResetPasswordRequest{}),
+			userController.ResetPassword)
+	}
+
+	//open (anyone can create users)
 	users.POST("",
 		goat.BindRequestMiddleware(controllers.CreateUserRequest{}),
 		userController.Store)
 
-	users.POST("/:id",
-		goat.BindRequestMiddleware(controllers.UpdateUserRequest{}),
-		userController.Update)
-
+	//TODO: these will be webhooks for stripe. figure out a good way to protect them.
 	users.POST("/:id/courses/attach",
 		goat.BindRequestMiddleware(controllers.AttachCourseRequest{}),
 		userController.AttachCourse)
-
-	users.POST("/:id/reset",
-		goat.BindRequestMiddleware(controllers.ResetPasswordRequest{}),
-		userController.ResetPassword)
 
 	users.POST("/:id/courses/revoke",
 		goat.BindRequestMiddleware(controllers.RevokeCourseRequest{}),
@@ -69,11 +75,18 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 
 	//api endpoints, must be admin
 	api := engine.Group("/api")
-	api.Use(middleware.RequireAuth(c.Errors, c.UserRepo, c.SessionService, c.PasswordService, models.AdminUser))
+	api.Use(middleware.RequireAuth(c.Errors, c.UserRepo, c.SessionService, models.AdminUser))
 	{
 		//users
 		users = api.Group("/users")
 		users.GET("", userController.Index)
+		users.POST("/:id",
+			goat.BindRequestMiddleware(controllers.UpdateUserRequest{}),
+			userController.Update)
+		users.POST("",
+			goat.BindRequestMiddleware(controllers.CreateUserAPIRequest{}),
+			userController.StoreAPI)
+		users.DELETE("/:id", userController.Delete)
 
 		//lessons
 		lessons := api.Group("/lessons")

@@ -26,12 +26,12 @@ type courseResponse struct {
 
 type CreateCourseRequest struct {
 	Name string `json:"name" binding:"required"`
-	Type string `json:"type" binding:"required"`
+	Type string `json:"course_type" binding:"required"`
 }
 
 type UpdateCourseRequest struct {
-	Name string `json:"name" binding:"required"`
-	Type string `json:"type" binding:"required"`
+	Name string `json:"name"`
+	Type string `json:"course_type"`
 }
 
 type AttachLessonRequest struct {
@@ -145,6 +145,14 @@ func (cc *CourseController) Update(c *gin.Context) {
 	}
 
 	course.Name = req.Name
+
+	courseType, err := models.CourseTypeFromString(req.Type)
+	if err != nil {
+		cc.errors.HandleErrorM(c, err, "failed to convert course type", goat.RespondBadRequestError)
+		return
+	}
+
+	course.CourseType = courseType
 
 	errs = cc.courseRepo.Save(&course)
 	if len(errs) > 0 {

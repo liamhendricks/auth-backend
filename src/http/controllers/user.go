@@ -6,6 +6,7 @@ import (
 
 	"github.com/68696c6c/goat"
 	"github.com/68696c6c/goat/query"
+	"github.com/68696c6c/goat/query/filter"
 	"github.com/gin-gonic/gin"
 	"github.com/liamhendricks/auth-backend/src/models"
 	"github.com/liamhendricks/auth-backend/src/repos"
@@ -38,14 +39,19 @@ type CreateUserRequest struct {
 	Name     string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
-	UserType string `json:"user_type" binding:"required"`
+}
+
+type CreateUserAPIRequest struct {
+	Name    string   `json:"name" binding:"required"`
+	Email   string   `json:"email" binding:"required"`
+	Courses []string `json:"Courses"`
 }
 
 type UpdateUserRequest struct {
-	Name     string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	UserType string `json:"user_type" binding:"required"`
+	Name     string   `json:"name"`
+	Email    string   `json:"email"`
+	Courses  []string `json:"Courses"`
+	Password string   `json:"password"`
 }
 
 type AttachCourseRequest struct {
@@ -116,7 +122,7 @@ func (u *UserController) Update(c *gin.Context) {
 		return
 	}
 
-	user, errs := u.userRepo.GetByID(id, false)
+	user, errs := u.userRepo.GetByID(id, true)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
 			u.errors.HandleErrorsM(c, errs, "user does not exist", goat.RespondNotFoundError)
@@ -150,6 +156,32 @@ func (u *UserController) Update(c *gin.Context) {
 
 		user.Password = string(p)
 	}
+
+	var cids []goat.ID
+
+	//set user_courses
+	for _, v := range req.Courses {
+		cid, err := goat.ParseID(v)
+		if err != nil {
+			u.errors.HandleErrorM(c, err, "failed to parse id: "+v, goat.RespondBadRequestError)
+			return
+		}
+
+		cids = append(cids, cid)
+	}
+
+	q := query.Query{}
+	q.Filter = filter.NewFilter()
+	q.WhereIn("id", cids)
+	cs, errs := u.courseRepo.GetAll(&q)
+	if len(errs) > 0 {
+		goat.RespondServerErrors(c, errs)
+		return
+	}
+
+	//clear all relationships and then just add them back
+	u.userRepo.Clear(&user, "Courses")
+	user.Courses = cs
 
 	errs = u.userRepo.Save(&user)
 	if len(errs) > 0 {
@@ -189,16 +221,10 @@ func (u *UserController) Store(c *gin.Context) {
 		return
 	}
 
-	userType, err := models.UserTypeFromString(req.UserType)
-	if err != nil {
-		u.errors.HandleErrorM(c, err, "incorrect user type", goat.RespondBadRequestError)
-		return
-	}
-
 	user := models.User{
 		Name:     req.Name,
 		Email:    req.Email,
-		UserType: userType,
+		UserType: models.FreeUser,
 		Password: string(p),
 	}
 
@@ -207,6 +233,41 @@ func (u *UserController) Store(c *gin.Context) {
 		u.errors.HandleErrorsM(c, errs, "failed to save user", goat.RespondServerError)
 		return
 	}
+
+	//TODO: send welcome email
+
+	goat.RespondCreated(c, userResponse{User: user})
+}
+
+func (u *UserController) StoreAPI(c *gin.Context) {
+	req, ok := goat.GetRequest(c).(*CreateUserAPIRequest)
+	if !ok {
+		u.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
+		return
+	}
+
+	pw := services.RandomString(10)
+
+	p, err := u.password.Hash([]byte(pw))
+	if err != nil {
+		u.errors.HandleErrorM(c, err, "cant handle password", goat.RespondServerError)
+		return
+	}
+
+	user := models.User{
+		Name:     req.Name,
+		Email:    req.Email,
+		UserType: models.FreeUser,
+		Password: string(p),
+	}
+
+	errs := u.userRepo.Save(&user)
+	if len(errs) > 0 {
+		u.errors.HandleErrorsM(c, errs, "failed to save user", goat.RespondServerError)
+		return
+	}
+
+	//TODO: send welcome email
 
 	goat.RespondCreated(c, userResponse{User: user})
 }

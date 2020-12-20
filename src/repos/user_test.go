@@ -7,6 +7,7 @@ import (
 
 	"github.com/68696c6c/goat"
 	"github.com/68696c6c/goat/query"
+	"github.com/68696c6c/goat/query/filter"
 	"github.com/icrowley/fake"
 	"github.com/liamhendricks/auth-backend/src/models"
 	"github.com/stretchr/testify/require"
@@ -90,4 +91,34 @@ func TestUsersGetAllRelations(t *testing.T) {
 	require.NotNil(t, u.Courses)
 	require.NotNil(t, u.Reset)
 	require.NotNil(t, u.Session)
+}
+
+func TestUsersGetAllIds(t *testing.T) {
+	var ids []goat.ID
+	id1 := Tf.Users[0].ID
+	id2 := Tf.Users[1].ID
+	ids = append(ids, id1, id2)
+	q := query.Query{}
+	q.Filter = filter.NewFilter()
+	q.WhereIn("id", ids)
+
+	users, errs := Tc.UserRepo.GetAll(&q)
+	require.Nil(t, errs)
+	require.Len(t, users, 2)
+}
+
+func TestUsersClear(t *testing.T) {
+	var courses []*models.Course
+	u := Tf.Users[0]
+	c := models.MakeCourse(true)
+	cn := c.Name
+	courses = append(courses, &c)
+	Tc.UserRepo.Clear(&u, "Courses")
+	u.Courses = courses
+	errs := Tc.UserRepo.Save(&u)
+	require.Nil(t, errs)
+	user, errs := Tc.UserRepo.GetByID(u.ID, true)
+	require.Nil(t, errs)
+	require.Len(t, user.Courses, 1)
+	require.Equal(t, user.Courses[0].Name, cn)
 }

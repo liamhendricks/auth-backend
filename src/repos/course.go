@@ -13,6 +13,7 @@ type CourseRepo interface {
 	GetByID(id goat.ID, load bool) (m models.Course, errs []error)
 	GetByName(name string, load bool) (m models.Course, errs []error)
 	Delete(id goat.ID) (errs []error)
+	Clear(m *models.Course, assoc string)
 }
 
 type CourseRepoGorm struct {
@@ -66,4 +67,8 @@ func (c CourseRepoGorm) GetByName(name string, load bool) (m models.Course, errs
 func (c CourseRepoGorm) Delete(id goat.ID) (errs []error) {
 	errs = c.db.Delete(&models.Course{}, "id = ?", id).GetErrors()
 	return
+}
+
+func (u CourseRepoGorm) Clear(m *models.Course, assoc string) {
+	u.db.Model(m).Association(assoc).Clear()
 }

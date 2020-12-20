@@ -13,6 +13,7 @@ type UserRepo interface {
 	GetByID(id goat.ID, load bool) (m models.User, errs []error)
 	GetByNameOrEmail(username, email string, load bool) (m models.User, errs []error)
 	Delete(id goat.ID) (errs []error)
+	Clear(m *models.User, assoc string)
 }
 
 func NewUserRepoGorm(db *gorm.DB, disable bool) UsersRepoGorm {
@@ -68,4 +69,8 @@ func (u UsersRepoGorm) GetByNameOrEmail(username, email string, load bool) (m mo
 func (u UsersRepoGorm) Delete(id goat.ID) (errs []error) {
 	errs = u.db.Delete(&models.User{}, "id = ?", id).GetErrors()
 	return
+}
+
+func (u UsersRepoGorm) Clear(m *models.User, assoc string) {
+	u.db.Model(m).Association(assoc).Clear()
 }
