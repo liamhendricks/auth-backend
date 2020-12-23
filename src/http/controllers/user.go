@@ -246,7 +246,9 @@ func (u *UserController) StoreAPI(c *gin.Context) {
 		return
 	}
 
-	pw := services.RandomString(10)
+	//TODO: no
+	//pw := services.RandomString(10)
+	pw := "password123"
 
 	p, err := u.password.Hash([]byte(pw))
 	if err != nil {
@@ -499,6 +501,9 @@ func (u *UserController) RevokeCourse(c *gin.Context) {
 
 	goat.RespondMessage(c, fmt.Sprintf("%s has been added to %s's account", course.Name, user.Name))
 }
+
+//TODO: a way to change a user's permission. accessible only by api admin
+func (u *UserController) UserLevel(c *gin.Context) {}
 
 func revoke(key int, courses []*models.Course) []*models.Course {
 	courses[len(courses)-1], courses[key] = courses[key], courses[len(courses)-1]

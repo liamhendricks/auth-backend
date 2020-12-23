@@ -58,7 +58,7 @@ func (cc *CourseController) Index(c *gin.Context) {
 	}
 
 	if _, ok := qp["with_lessons"]; ok {
-		q.Preload = append(q.Preload, "Lessons")
+		q.Preload = append(q.Preload, "Lessons.LessonData")
 	}
 
 	courses, errs := cc.courseRepo.GetAll(&q)

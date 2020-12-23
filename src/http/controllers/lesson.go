@@ -33,9 +33,9 @@ type CreateLessonRequest struct {
 }
 
 type UpdateLessonRequest struct {
-	Name       string `json:"name"`
-	CourseID   string `json:"course_id"`
-	LessonData string `json:"lesson_data"`
+	Name       string             `json:"name"`
+	CourseID   string             `json:"course_id"`
+	LessonData *models.LessonData `json:"lesson_data"`
 }
 
 func NewLessonController(lr repos.LessonRepo, cr repos.CourseRepo, es goat.ErrorHandler) LessonController {
@@ -47,7 +47,9 @@ func NewLessonController(lr repos.LessonRepo, cr repos.CourseRepo, es goat.Error
 }
 
 func (lc *LessonController) Index(c *gin.Context) {
-	lessons, errs := lc.lessonRepo.GetAll(&query.Query{})
+	q := query.Query{}
+	q.Preload = append(q.Preload, "LessonData")
+	lessons, errs := lc.lessonRepo.GetAll(&q)
 	if len(errs) > 0 {
 		goat.RespondServerErrors(c, errs)
 		return
@@ -91,9 +93,9 @@ func (lc *LessonController) Store(c *gin.Context) {
 	}
 
 	lesson := models.Lesson{
-		Name:       req.Name,
-		CourseID:   id,
-		LessonData: req.LessonData,
+		Name:     req.Name,
+		CourseID: id,
+		//LessonData: req.LessonData,
 	}
 
 	errs := lc.lessonRepo.Save(&lesson)

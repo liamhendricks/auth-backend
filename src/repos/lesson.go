@@ -42,12 +42,12 @@ func (l LessonRepoGorm) GetAll(q *query.Query) (m []*models.Lesson, errs []error
 		return m, []error{err}
 	}
 
-	errs = qr.Find(&m).GetErrors()
+	errs = qr.Find(&m).Preload("LessonData").GetErrors()
 	return m, errs
 }
 
 func (l LessonRepoGorm) GetByID(id goat.ID) (m models.Lesson, errs []error) {
-	errs = l.db.First(&m, "id = ?", id).GetErrors()
+	errs = l.db.First(&m, "id = ?", id).Preload("LessonData").GetErrors()
 	return
 }
 
