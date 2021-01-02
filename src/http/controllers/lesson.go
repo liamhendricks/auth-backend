@@ -27,15 +27,15 @@ type lessonResponse struct {
 }
 
 type CreateLessonRequest struct {
-	Name       string `json:"name" binding:"required"`
-	CourseID   string `json:"course_id" binding:"required"`
-	LessonData string `json:"lesson_data"`
+	Name     string `json:"name" binding:"required"`
+	CourseID string `json:"course_id" binding:"required"`
+	Data     string `json:"data"`
 }
 
 type UpdateLessonRequest struct {
-	Name       string             `json:"name"`
-	CourseID   string             `json:"course_id"`
-	LessonData *models.LessonData `json:"lesson_data"`
+	Name     string `json:"name"`
+	CourseID string `json:"course_id"`
+	Data     string `json:"data"`
 }
 
 func NewLessonController(lr repos.LessonRepo, cr repos.CourseRepo, es goat.ErrorHandler) LessonController {
@@ -48,7 +48,6 @@ func NewLessonController(lr repos.LessonRepo, cr repos.CourseRepo, es goat.Error
 
 func (lc *LessonController) Index(c *gin.Context) {
 	q := query.Query{}
-	q.Preload = append(q.Preload, "LessonData")
 	lessons, errs := lc.lessonRepo.GetAll(&q)
 	if len(errs) > 0 {
 		goat.RespondServerErrors(c, errs)
@@ -86,6 +85,7 @@ func (lc *LessonController) Store(c *gin.Context) {
 		lc.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
 		return
 	}
+
 	id, err := goat.ParseID(req.CourseID)
 	if err != nil {
 		lc.errors.HandleErrorM(c, err, "failed to parse ID", goat.RespondBadRequestError)
@@ -95,7 +95,11 @@ func (lc *LessonController) Store(c *gin.Context) {
 	lesson := models.Lesson{
 		Name:     req.Name,
 		CourseID: id,
-		//LessonData: req.LessonData,
+		Data:     "{}",
+	}
+
+	if req.Data != "" {
+		lesson.Data = req.Data
 	}
 
 	errs := lc.lessonRepo.Save(&lesson)
@@ -106,6 +110,7 @@ func (lc *LessonController) Store(c *gin.Context) {
 
 	goat.RespondCreated(c, lessonResponse{Lesson: lesson})
 }
+
 func (lc *LessonController) Update(c *gin.Context) {
 	i := c.Param("id")
 	id, err := goat.ParseID(i)
@@ -133,8 +138,9 @@ func (lc *LessonController) Update(c *gin.Context) {
 
 	lesson.Name = req.Name
 
-	//validate or marshall not sure atm
-	lesson.LessonData = req.LessonData
+	if req.Data != "" {
+		lesson.Data = req.Data
+	}
 
 	courseID, err := goat.ParseID(req.CourseID)
 	if err != nil {

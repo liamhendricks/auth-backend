@@ -7,26 +7,20 @@ import (
 
 type Lesson struct {
 	goat.Model
-	Name       string      `json:"name" binding:"required"`
-	Ordering   int         `json:"ordering" binding:"required"`
-	LessonData *LessonData `json:"lesson_data"`
-	CourseID   goat.ID     `json:"course_id"`
-}
-
-type LessonData struct {
-	goat.Model
-	LessonID        goat.ID `json:"lesson_id" binding:"required"`
-	MainHeader      string  `json:"main_header"`
-	MainDescription string  `json:"main_description"`
+	Name     string  `json:"name" binding:"required"`
+	Ordering int     `json:"ordering" binding:"required"`
+	Data     string  `json:"data"`
+	CourseID goat.ID `json:"course_id"`
 }
 
 func MakeLesson(id goat.ID) Lesson {
 	return Lesson{
 		Name: fake.Title(),
-		LessonData: &LessonData{
-			MainHeader:      "Main Header",
-			MainDescription: "Main Description",
-		},
+		Data: `
+    {
+      "foo": "bar",
+    }
+    `,
 		Ordering: 0,
 		CourseID: id,
 	}

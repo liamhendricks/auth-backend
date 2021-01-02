@@ -28,37 +28,25 @@ var seedCommand = &cobra.Command{
 		lesson := models.Lesson{
 			Name:     "How to Draw Pretty Good",
 			Ordering: 0,
-			LessonData: &models.LessonData{
-				MainHeader:      "Module 1: How to Draw Pretty Good",
-				MainDescription: "Description1",
-			},
+			Data:     "{}",
 		}
 
 		lesson2 := models.Lesson{
 			Name:     "How to Draw Extremely Well",
 			Ordering: 1,
-			LessonData: &models.LessonData{
-				MainHeader:      "Module 2: How to Draw Extremely Well",
-				MainDescription: "Description1",
-			},
+			Data:     "{}",
 		}
 
 		lesson3 := models.Lesson{
 			Name:     "How to Paint Pretty Good",
 			Ordering: 0,
-			LessonData: &models.LessonData{
-				MainHeader:      "Module 1: How to Paint Pretty Good",
-				MainDescription: "Description1",
-			},
+			Data:     "{}",
 		}
 
 		lesson4 := models.Lesson{
 			Name:     "How to Paint Extremely Well",
 			Ordering: 1,
-			LessonData: &models.LessonData{
-				MainHeader:      "Module 2: How to Paint Extremely Well",
-				MainDescription: "Description1",
-			},
+			Data:     "{}",
 		}
 
 		p, err := app.PasswordService.Hash([]byte("password"))
