@@ -87,6 +87,7 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 			goat.BindRequestMiddleware(controllers.CreateUserAPIRequest{}),
 			userController.StoreAPI)
 		users.DELETE("/:id", userController.Delete)
+		users.POST("/:id/level", goat.BindRequestMiddleware(controllers.UserLevelRequest{}), userController.UserLevel)
 
 		//lessons
 		lessons := api.Group("/lessons")

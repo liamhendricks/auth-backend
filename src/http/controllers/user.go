@@ -67,6 +67,10 @@ type ResetPasswordRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type UserLevelRequest struct {
+	UserLevel string `json:"user_level" binding:"required"`
+}
+
 type usersResponse struct {
 	Users []*models.User
 }
@@ -122,6 +126,12 @@ func (u *UserController) Update(c *gin.Context) {
 		return
 	}
 
+	req, ok := goat.GetRequest(c).(*UpdateUserRequest)
+	if !ok {
+		u.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
+		return
+	}
+
 	user, errs := u.userRepo.GetByID(id, true)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
@@ -131,12 +141,6 @@ func (u *UserController) Update(c *gin.Context) {
 			u.errors.HandleErrorsM(c, errs, "failed to get user", goat.RespondServerError)
 			return
 		}
-	}
-
-	req, ok := goat.GetRequest(c).(*UpdateUserRequest)
-	if !ok {
-		u.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
-		return
 	}
 
 	if req.Name != "" {
@@ -179,7 +183,7 @@ func (u *UserController) Update(c *gin.Context) {
 		return
 	}
 
-	//clear all relationships and then just add them back
+	//clear all relationships and then just add the updated ones back
 	u.userRepo.Clear(&user, "Courses")
 	user.Courses = cs
 
@@ -502,8 +506,9 @@ func (u *UserController) RevokeCourse(c *gin.Context) {
 	goat.RespondMessage(c, fmt.Sprintf("%s has been added to %s's account", course.Name, user.Name))
 }
 
-//TODO: a way to change a user's permission. accessible only by api admin
-func (u *UserController) UserLevel(c *gin.Context) {}
+func (u *UserController) UserLevel(c *gin.Context) {
+
+}
 
 func revoke(key int, courses []*models.Course) []*models.Course {
 	courses[len(courses)-1], courses[key] = courses[key], courses[len(courses)-1]

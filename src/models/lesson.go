@@ -15,12 +15,8 @@ type Lesson struct {
 
 func MakeLesson(id goat.ID) Lesson {
 	return Lesson{
-		Name: fake.Title(),
-		Data: `
-    {
-      "foo": "bar",
-    }
-    `,
+		Name:     fake.Title(),
+		Data:     `{ "foo": "bar"}`,
 		Ordering: 0,
 		CourseID: id,
 	}

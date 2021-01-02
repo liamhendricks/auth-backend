@@ -35,6 +35,7 @@ type CreateLessonRequest struct {
 type UpdateLessonRequest struct {
 	Name     string `json:"name"`
 	CourseID string `json:"course_id"`
+	Ordering int    `json:"ordering"`
 	Data     string `json:"data"`
 }
 
@@ -95,7 +96,7 @@ func (lc *LessonController) Store(c *gin.Context) {
 	lesson := models.Lesson{
 		Name:     req.Name,
 		CourseID: id,
-		Data:     "{}",
+		Data:     req.Data,
 	}
 
 	if req.Data != "" {
@@ -137,6 +138,7 @@ func (lc *LessonController) Update(c *gin.Context) {
 	}
 
 	lesson.Name = req.Name
+	lesson.Ordering = req.Ordering
 
 	if req.Data != "" {
 		lesson.Data = req.Data
