@@ -11,7 +11,7 @@ import (
 
 type SessionService interface {
 	Start(user *models.User) error
-	Refresh(user *models.User, length time.Duration) error
+	Refresh(user *models.User, length time.Duration) (*models.Session, error)
 	Stop(user *models.User) error
 	Valid(user *models.User, token goat.ID) bool
 }
@@ -50,18 +50,18 @@ func (ss SessionServiceDB) Start(user *models.User) error {
 	return nil
 }
 
-func (ss SessionServiceDB) Refresh(user *models.User, length time.Duration) error {
+func (ss SessionServiceDB) Refresh(user *models.User, length time.Duration) (*models.Session, error) {
 	if user.Session == nil {
-		return errors.New("no session exists for this user")
+		return &models.Session{}, errors.New("no session exists for this user")
 	}
 
 	user.Session.Expiration = time.Now().Add(length)
 	errs := ss.sessionRepo.Save(user.Session)
 	if len(errs) > 0 {
-		return errors.New("failed saving session")
+		return &models.Session{}, errors.New("failed saving session")
 	}
 
-	return nil
+	return user.Session, nil
 }
 
 func (ss SessionServiceDB) Stop(user *models.User) error {

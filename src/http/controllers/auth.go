@@ -150,11 +150,13 @@ func (ac *AuthController) CheckSession(c *gin.Context) {
 		return
 	}
 
-	err = ac.sessionService.Refresh(&user, 20*time.Minute)
+	session, err := ac.sessionService.Refresh(&user, 30*time.Minute)
 	if err != nil {
 		ac.errors.HandleErrorM(c, err, "error refreshing session", goat.RespondServerError)
 		return
 	}
+
+	user.Session = session
 
 	goat.RespondData(c, sessionResponse{
 		user,
