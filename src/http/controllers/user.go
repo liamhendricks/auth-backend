@@ -14,11 +14,12 @@ import (
 )
 
 type UserController struct {
-	userRepo   repos.UserRepo
-	resetRepo  repos.ResetRepo
-	courseRepo repos.CourseRepo
-	password   services.PasswordService
-	errors     goat.ErrorHandler
+	userRepo       repos.UserRepo
+	resetRepo      repos.ResetRepo
+	courseRepo     repos.CourseRepo
+	password       services.PasswordService
+	sessionService services.SessionService
+	errors         goat.ErrorHandler
 }
 
 func NewUserController(
@@ -26,12 +27,14 @@ func NewUserController(
 	rr repos.ResetRepo,
 	cr repos.CourseRepo,
 	ps services.PasswordService,
+	ss services.SessionService,
 	es goat.ErrorHandler) UserController {
 	return UserController{
-		userRepo:   ur,
-		courseRepo: cr,
-		password:   ps,
-		errors:     es,
+		userRepo:       ur,
+		courseRepo:     cr,
+		password:       ps,
+		sessionService: ss,
+		errors:         es,
 	}
 }
 
@@ -76,7 +79,7 @@ type usersResponse struct {
 }
 
 type userResponse struct {
-	User models.User
+	models.User
 }
 
 func (u *UserController) Index(c *gin.Context) {
@@ -115,7 +118,9 @@ func (u *UserController) Show(c *gin.Context) {
 		}
 	}
 
-	goat.RespondData(c, userResponse{User: user})
+	goat.RespondData(c, userResponse{
+		user,
+	})
 }
 
 func (u *UserController) Update(c *gin.Context) {
@@ -238,9 +243,17 @@ func (u *UserController) Store(c *gin.Context) {
 		return
 	}
 
+	err = u.sessionService.Start(&user)
+	if err != nil {
+		u.errors.HandleErrorsM(c, errs, "failed to start session", goat.RespondServerError)
+		return
+	}
+
 	//TODO: send welcome email
 
-	goat.RespondCreated(c, userResponse{User: user})
+	goat.RespondData(c, userResponse{
+		user,
+	})
 }
 
 func (u *UserController) StoreAPI(c *gin.Context) {
@@ -275,7 +288,9 @@ func (u *UserController) StoreAPI(c *gin.Context) {
 
 	//TODO: send welcome email
 
-	goat.RespondCreated(c, userResponse{User: user})
+	goat.RespondCreated(c, userResponse{
+		user,
+	})
 }
 
 func (u *UserController) UserCourses(c *gin.Context) {

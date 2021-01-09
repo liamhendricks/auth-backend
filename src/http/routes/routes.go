@@ -15,6 +15,7 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		c.ResetRepo,
 		c.CourseRepo,
 		c.PasswordService,
+		c.SessionService,
 		c.Errors)
 
 	authController := controllers.NewAuthController(c.UserRepo,
@@ -48,6 +49,7 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 	}
 
 	//open (anyone can create users)
+	users = engine.Group("/users")
 	users.POST("",
 		goat.BindRequestMiddleware(controllers.CreateUserRequest{}),
 		userController.Store)
