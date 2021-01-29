@@ -171,9 +171,23 @@ func (cc *CourseController) Delete(c *gin.Context) {
 		return
 	}
 
-	errs := cc.courseRepo.Delete(id)
+	course, errs := cc.courseRepo.GetByID(id, true)
 	if len(errs) > 0 {
-		cc.errors.HandleErrorsM(c, errs, "failed to delete user", goat.RespondBadRequestError)
+		if goat.RecordNotFound(errs) {
+			cc.errors.HandleErrorsM(c, errs, "course does not exist", goat.RespondNotFoundError)
+			return
+		} else {
+			cc.errors.HandleErrorsM(c, errs, "failed to get user", goat.RespondServerError)
+			return
+		}
+	}
+
+	//clear association table
+	cc.courseRepo.Clear(&course, "Users")
+
+	errs = cc.courseRepo.Delete(id)
+	if len(errs) > 0 {
+		cc.errors.HandleErrorsM(c, errs, "failed to delete course", goat.RespondBadRequestError)
 	}
 
 	goat.RespondMessage(c, fmt.Sprintf("ID: %s has been deleted", id.String()))
