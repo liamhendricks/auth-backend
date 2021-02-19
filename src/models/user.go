@@ -16,13 +16,19 @@ type User struct {
 	Courses  []*Course `gorm:"many2many:user_courses;"`
 	Session  *Session
 	Reset    *Reset
+	Status   UserStatus
 }
 
 type UserType string
+type UserStatus string
 
 const AdminUser UserType = "Admin"
 const FreeUser UserType = "Free"
 const PaidUser UserType = "Paid"
+
+const UserOk = "OK"
+const UserMissingCourse = "Missing Course"
+const UserUnpaid = "Unpaid"
 
 func MakeUser() User {
 	return User{

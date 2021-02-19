@@ -59,16 +59,22 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	user, errs := ac.userRepo.GetByNameOrEmail(req.Name, req.Email, true)
+	println(req.Email, req.Name)
+	var user models.User
+	var uErrs []error
+	user, errs := ac.userRepo.GetByEmail(req.Email, true)
 	if len(errs) > 0 {
-		if goat.RecordNotFound(errs) {
-			ac.errors.HandleContext(c,
-				fmt.Sprintf("could not find user with name: %s or email: %s", req.Name, req.Email),
-				goat.RespondAuthenticationError)
-			return
-		} else {
-			ac.errors.HandleMessage(c, "failed to get user", goat.RespondServerError)
-			return
+		user, uErrs = ac.userRepo.GetByUserName(req.Name, true)
+		if len(uErrs) > 0 {
+			if goat.RecordNotFound(uErrs) {
+				ac.errors.HandleContext(c,
+					fmt.Sprintf("could not find user with name: %s or email: %s", req.Name, req.Email),
+					goat.RespondAuthenticationError)
+				return
+			} else {
+				ac.errors.HandleMessage(c, "failed to get user", goat.RespondServerError)
+				return
+			}
 		}
 	}
 
@@ -97,7 +103,7 @@ func (ac *AuthController) Logout(c *gin.Context) {
 		return
 	}
 
-	user, errs := ac.userRepo.GetByNameOrEmail(req.Name, "", true)
+	user, errs := ac.userRepo.GetByUserName(req.Name, true)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
 			ac.errors.HandleContext(c,
@@ -124,7 +130,7 @@ func (ac *AuthController) CheckSession(c *gin.Context) {
 		return
 	}
 
-	user, errs := ac.userRepo.GetByNameOrEmail(req.Name, "", true)
+	user, errs := ac.userRepo.GetByUserName(req.Name, true)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
 			ac.errors.HandleContext(c,

@@ -21,34 +21,6 @@ var seedCommand = &cobra.Command{
 			goat.ExitError(err)
 		}
 
-		var firstLessons []*models.Lesson
-		var secondLessons []*models.Lesson
-		var users []*models.User
-
-		lesson := models.Lesson{
-			Name:     "How to Draw Pretty Good",
-			Ordering: 0,
-			Data:     "{}",
-		}
-
-		lesson2 := models.Lesson{
-			Name:     "How to Draw Extremely Well",
-			Ordering: 1,
-			Data:     "{}",
-		}
-
-		lesson3 := models.Lesson{
-			Name:     "How to Paint Pretty Good",
-			Ordering: 0,
-			Data:     "{}",
-		}
-
-		lesson4 := models.Lesson{
-			Name:     "How to Paint Extremely Well",
-			Ordering: 1,
-			Data:     "{}",
-		}
-
 		p, err := app.PasswordService.Hash([]byte("password"))
 		if err != nil {
 			panic(err)
@@ -62,34 +34,21 @@ var seedCommand = &cobra.Command{
 			Session:  nil,
 		}
 
-		firstLessons = append(firstLessons, &lesson)
-		firstLessons = append(firstLessons, &lesson2)
-		secondLessons = append(secondLessons, &lesson3)
-		secondLessons = append(secondLessons, &lesson4)
-		users = append(users, &user)
-
 		course := models.Course{
-			Name:       "Introduction to Drawing",
-			Lessons:    firstLessons,
-			Users:      users,
-			CourseType: models.PaidCourse,
-		}
-
-		course2 := models.Course{
-			Name:       "Level Two Painting Class",
-			Lessons:    secondLessons,
-			Users:      users,
-			CourseType: models.PaidCourse,
+			Name:       "TestCourse",
+			CourseType: "Free",
 		}
 
 		errs := app.CourseRepo.Save(&course)
 		if len(errs) > 0 {
-			panic(errs)
+			goat.ExitError(err)
+		}
+		println("ID: ", course.ID.String())
+
+		errs = app.UserRepo.Save(&user)
+		if len(errs) > 0 {
+			goat.ExitError(err)
 		}
 
-		errs = app.CourseRepo.Save(&course2)
-		if len(errs) > 0 {
-			panic(errs)
-		}
 	},
 }

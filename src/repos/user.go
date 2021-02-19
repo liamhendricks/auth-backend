@@ -11,7 +11,8 @@ type UserRepo interface {
 	Save(model *models.User) (errs []error)
 	GetAll(q *query.Query) (m []*models.User, errs []error)
 	GetByID(id goat.ID, load bool) (m models.User, errs []error)
-	GetByNameOrEmail(username, email string, load bool) (m models.User, errs []error)
+	GetByEmail(email string, load bool) (m models.User, errs []error)
+	GetByUserName(username string, load bool) (m models.User, errs []error)
 	Delete(id goat.ID) (errs []error)
 	Clear(m *models.User, assoc string)
 }
@@ -57,12 +58,21 @@ func (u UsersRepoGorm) GetByID(id goat.ID, load bool) (m models.User, errs []err
 	return
 }
 
-func (u UsersRepoGorm) GetByNameOrEmail(username, email string, load bool) (m models.User, errs []error) {
+func (u UsersRepoGorm) GetByEmail(email string, load bool) (m models.User, errs []error) {
 	q := u.db
 	if load {
-		q = q.Preload("Courses").Preload("Courses.Lessons").Preload("Session").Preload("Reset")
+		q = q.Preload("Courses.Lessons").Preload("Session").Preload("Reset")
 	}
-	errs = q.First(&m, "name = ? or email = ?", username, email).GetErrors()
+	errs = q.First(&m, "email = ?", email).GetErrors()
+	return
+}
+
+func (u UsersRepoGorm) GetByUserName(username string, load bool) (m models.User, errs []error) {
+	q := u.db
+	if load {
+		q = q.Preload("Courses.Lessons").Preload("Session").Preload("Reset")
+	}
+	errs = q.First(&m, "name = ?", username).GetErrors()
 	return
 }
 

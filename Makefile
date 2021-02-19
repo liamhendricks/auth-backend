@@ -21,8 +21,14 @@ local: local-down build
 local-down:
 	docker-compose rm -sf
 
+refresh:
+	docker-compose run --rm api ./api migrate drop
+	docker-compose run --rm api ./api migrate up
+	docker-compose run --rm api ./api seed $(SEED_ARG)
+	docker-compose up api
+
 test:
-	docker-compose run --rm api go test -cover -v ./... -tags nojira
+	docker-compose run --rm api go test -cover ./... -tags nojira
 
 migrate: build
 	docker-compose run --rm api ./api migrate $(MIGRATION_ARG)

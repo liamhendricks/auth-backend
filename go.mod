@@ -17,6 +17,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
+	github.com/stripe/stripe-go/v72 v72.33.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/sys v0.0.0-20200523222454-059865788121 // indirect
 	google.golang.org/protobuf v1.24.0 // indirect

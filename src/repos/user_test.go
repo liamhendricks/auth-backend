@@ -23,6 +23,13 @@ func TestUsersRepoSave(t *testing.T) {
 	require.Equal(t, u.ID, theUser.ID)
 }
 
+func TestUsersRepoGetByEmail(t *testing.T) {
+	u := Tf.Users[4]
+	user, errs := Tc.UserRepo.GetByEmail(u.Email, true)
+	require.Empty(t, errs)
+	require.Equal(t, user.Name, u.Name)
+}
+
 func TestUsersRepoUpdate(t *testing.T) {
 	u := Tf.Users[1]
 	u.Name = "NewName"

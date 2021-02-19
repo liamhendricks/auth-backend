@@ -25,6 +25,12 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 
 	lessonController := controllers.NewLessonController(c.LessonRepo, c.CourseRepo, c.Errors)
 	courseController := controllers.NewCourseController(c.CourseRepo, c.LessonRepo, c.Errors)
+	stripeController := controllers.NewStripeController(
+		c.Errors,
+		c.Config.StripeEndpointSecret,
+		c.Config.StripeSecretKey,
+		c.CourseRepo,
+		c.UserRepo)
 
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
@@ -54,15 +60,6 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		goat.BindRequestMiddleware(controllers.CreateUserRequest{}),
 		userController.Store)
 
-	//TODO: these will be webhooks for stripe. figure out a good way to protect them.
-	users.POST("/:id/courses/attach",
-		goat.BindRequestMiddleware(controllers.AttachCourseRequest{}),
-		userController.AttachCourse)
-
-	users.POST("/:id/courses/revoke",
-		goat.BindRequestMiddleware(controllers.RevokeCourseRequest{}),
-		userController.RevokeCourse)
-
 	//auth
 	auth := engine.Group("/auth")
 	auth.POST("/login",
@@ -89,7 +86,6 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 			goat.BindRequestMiddleware(controllers.CreateUserAPIRequest{}),
 			userController.StoreAPI)
 		users.DELETE("/:id", userController.Delete)
-		users.POST("/:id/level", goat.BindRequestMiddleware(controllers.UserLevelRequest{}), userController.UserLevel)
 
 		//lessons
 		lessons := api.Group("/lessons")
@@ -123,6 +119,9 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 			goat.BindRequestMiddleware(controllers.AttachLessonRequest{}),
 			courseController.AttachLesson)
 	}
+
+	webhooks := engine.Group("/webhooks")
+	webhooks.POST("/stripe", stripeController.PaymentWebHook)
 }
 
 func Health(c *gin.Context) {

@@ -66,6 +66,11 @@ func RequireSelf(e goat.ErrorHandler, ur repos.UserRepo, ss services.SessionServ
 		}
 
 		authHeader := strings.Split(c.Request.Header["Authorization"][0], " ")
+		if len(authHeader) < 2 {
+			e.HandleContext(c, "access denied: no token / id pair "+i, goat.RespondUnauthorizedError)
+			return
+		}
+
 		token := authHeader[0]
 		i = authHeader[1]
 

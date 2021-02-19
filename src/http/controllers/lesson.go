@@ -27,8 +27,9 @@ type lessonResponse struct {
 }
 
 type CreateLessonRequest struct {
-	Name     string `json:"name" binding:"required"`
-	CourseID string `json:"course_id" binding:"required"`
+	Name     string `json:"name"`
+	CourseID string `json:"course_id"`
+	Ordering int    `json:"ordering"`
 	Data     string `json:"data"`
 }
 
@@ -97,6 +98,7 @@ func (lc *LessonController) Store(c *gin.Context) {
 		Name:     req.Name,
 		CourseID: id,
 		Data:     req.Data,
+		Ordering: req.Ordering,
 	}
 
 	if req.Data != "" {
@@ -137,12 +139,15 @@ func (lc *LessonController) Update(c *gin.Context) {
 		}
 	}
 
-	lesson.Name = req.Name
-	lesson.Ordering = req.Ordering
+	if req.Name != "" {
+		lesson.Name = req.Name
+	}
 
 	if req.Data != "" {
 		lesson.Data = req.Data
 	}
+
+	lesson.Ordering = req.Ordering
 
 	courseID, err := goat.ParseID(req.CourseID)
 	if err != nil {
