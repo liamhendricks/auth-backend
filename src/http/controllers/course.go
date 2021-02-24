@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/68696c6c/goat"
 	"github.com/68696c6c/goat/query"
@@ -26,11 +27,13 @@ type courseResponse struct {
 
 type CreateCourseRequest struct {
 	Name string `json:"name" binding:"required"`
+	Max  string `json:"max" binding:"required"`
 	Type string `json:"course_type" binding:"required"`
 }
 
 type UpdateCourseRequest struct {
 	Name string `json:"name"`
+	Max  string `json:"max"`
 	Type string `json:"course_type"`
 }
 
@@ -105,9 +108,16 @@ func (cc *CourseController) Store(c *gin.Context) {
 		return
 	}
 
+	max, err := strconv.Atoi(req.Max)
+	if err != nil {
+		cc.errors.HandleErrorM(c, err, "failed to parse max", goat.RespondBadRequestError)
+		return
+	}
+
 	course := models.Course{
 		Name:       req.Name,
 		CourseType: t,
+		Max:        max,
 	}
 
 	errs := cc.courseRepo.Save(&course)
@@ -145,6 +155,13 @@ func (cc *CourseController) Update(c *gin.Context) {
 	}
 
 	course.Name = req.Name
+	max, err := strconv.Atoi(req.Max)
+	if err != nil {
+		cc.errors.HandleErrorM(c, err, "failed to parse max", goat.RespondBadRequestError)
+		return
+	}
+
+	course.Max = max
 
 	courseType, err := models.CourseTypeFromString(req.Type)
 	if err != nil {

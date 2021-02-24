@@ -1,0 +1,2 @@
+ALTER TABLE `courses`
+  ADD COLUMN `max` INT NOT NULL DEFAULT 20 AFTER `name`;

@@ -12,6 +12,7 @@ type Course struct {
 	Name       string     `json:"name" binding:"required"`
 	Lessons    []*Lesson  `json:"lessons" gorm:"ForeignKey:CourseID"`
 	Users      []*User    `gorm:"many2many:user_courses;"`
+	Max        int        `json:"max" binding:"required"`
 	CourseType CourseType `json:"course_type" binding:"required"`
 }
 
@@ -37,5 +38,6 @@ func MakeCourse(free bool) Course {
 	return Course{
 		Name:       fake.Title(),
 		CourseType: t,
+		Max:        20,
 	}
 }

@@ -34,9 +34,11 @@ func TestCoursessRepoUpdate(t *testing.T) {
 
 func TestCoursesRepoGetByID(t *testing.T) {
 	id := Tf.Courses[0].ID
+	max := Tf.Courses[0].Max
 	Course, errs := Tc.CourseRepo.GetByID(id, true)
 	require.Nil(t, errs)
 	require.Equal(t, id, Course.ID)
+	require.Equal(t, max, Course.Max)
 }
 
 func TestCoursesRepoGetByName(t *testing.T) {
