@@ -15,16 +15,18 @@ var Tf TestFixtures
 
 type TestFixtures struct {
 	Users   []models.User
+	List    []models.EmailList
 	Lessons []*models.Lesson
 	Courses []*models.Course
 }
 
 type TestContainer struct {
-	UserRepo    UserRepo
-	LessonRepo  LessonRepo
-	SessionRepo SessionRepo
-	CourseRepo  CourseRepo
-	ResetRepo   ResetRepo
+	UserRepo      UserRepo
+	EmailListRepo EmailListRepo
+	LessonRepo    LessonRepo
+	SessionRepo   SessionRepo
+	CourseRepo    CourseRepo
+	ResetRepo     ResetRepo
 }
 
 func TestMain(m *testing.M) {
@@ -33,15 +35,17 @@ func TestMain(m *testing.M) {
 
 	r := NewUserRepoGorm(db, false)
 	l := NewLessonRepoGorm(db)
+	el := NewEmailListRepoGorm(db)
 	sr := NewSessionRepoGorm(db)
 	c := NewCourseRepoGorm(db)
 	rr := NewResetRepoGorm(db)
 	Tc = TestContainer{
-		UserRepo:    r,
-		LessonRepo:  l,
-		CourseRepo:  c,
-		SessionRepo: sr,
-		ResetRepo:   rr,
+		EmailListRepo: el,
+		UserRepo:      r,
+		LessonRepo:    l,
+		CourseRepo:    c,
+		SessionRepo:   sr,
+		ResetRepo:     rr,
 	}
 
 	seedTests(5, db)
@@ -78,6 +82,7 @@ func initRepoTestDB() *gorm.DB {
 
 func seedTests(num int, db *gorm.DB) {
 	var u []models.User
+	var el []models.EmailList
 	var l []*models.Lesson
 	var fc []*models.Course
 	var pc []*models.Course
@@ -111,9 +116,14 @@ func seedTests(num int, db *gorm.DB) {
 
 		persistFixture(db, &user)
 		u = append(u, user)
+
+		listMember := models.MakeEmailList()
+		persistFixture(db, &listMember)
+		el = append(el, listMember)
 	}
 
 	Tf.Users = u
+	Tf.List = el
 	Tf.Lessons = l
 	Tf.Courses = fc
 	Tf.Courses = append(Tf.Courses, pc...)

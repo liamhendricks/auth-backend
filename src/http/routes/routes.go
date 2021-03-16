@@ -32,6 +32,8 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		c.CourseRepo,
 		c.UserRepo)
 
+	emailListController := controllers.NewEmailListController(c.EmailListRepo, c.Errors)
+
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
 
@@ -76,6 +78,10 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 	api := engine.Group("/api")
 	api.Use(middleware.RequireAuth(c.Errors, c.UserRepo, c.SessionService, models.AdminUser))
 	{
+		//email list
+		list := api.Group("/email-list")
+		list.GET("", emailListController.Index)
+
 		//users
 		users = api.Group("/users")
 		users.GET("", userController.Index)
