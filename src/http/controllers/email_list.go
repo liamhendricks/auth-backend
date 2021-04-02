@@ -21,7 +21,7 @@ func NewEmailListController(el repos.EmailListRepo, es goat.ErrorHandler) EmailL
 }
 
 type CreateEmailListRequest struct {
-	Name  string `json:"username" binding:"required"`
+	Name  string `json:"name" binding:"required"`
 	Email string `json:"email" binding:"required"`
 }
 
@@ -37,4 +37,25 @@ func (elc *EmailListController) Index(c *gin.Context) {
 	}
 
 	goat.RespondData(c, emailListResponse{List: list})
+}
+
+func (elc *EmailListController) Store(c *gin.Context) {
+	req, ok := goat.GetRequest(c).(*CreateEmailListRequest)
+	if !ok {
+		elc.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
+		return
+	}
+
+	l := models.EmailList{
+		Email: req.Email,
+		Name:  req.Name,
+	}
+
+	errs := elc.emailListRepo.Save(&l)
+	if len(errs) > 0 {
+		elc.errors.HandleErrorsM(c, errs, "failed to save list", goat.RespondServerError)
+		return
+	}
+
+	goat.RespondMessage(c, "saved entry")
 }

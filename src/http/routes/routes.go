@@ -41,6 +41,7 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 	engine.POST("/reset",
 		goat.BindRequestMiddleware(controllers.ResetPasswordRequest{}),
 		userController.ResetPassword)
+	engine.POST("/email-list", goat.BindRequestMiddleware(controllers.CreateEmailListRequest{}), emailListController.Store)
 
 	//user endpoints, must be self
 	users := engine.Group("/users")
