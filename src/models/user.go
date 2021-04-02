@@ -29,6 +29,7 @@ const PaidUser UserType = "Paid"
 const UserOk = "OK"
 const UserMissingCourse = "Missing Course"
 const UserUnpaid = "Unpaid"
+const UserNoEmail = "Missing Email"
 
 func MakeUser() User {
 	return User{

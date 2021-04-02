@@ -8,7 +8,7 @@ import (
 
 type ResetRepo interface {
 	Save(model *models.Reset) (errs []error)
-	GetByTokenUser(token, userID goat.ID) (m models.Reset, errs []error)
+	GetByToken(token goat.ID) (m models.Reset, errs []error)
 	Delete(id goat.ID) (errs []error)
 }
 
@@ -31,8 +31,8 @@ func (r ResetRepoGorm) Save(m *models.Reset) (errs []error) {
 	return
 }
 
-func (r ResetRepoGorm) GetByTokenUser(token, userID goat.ID) (m models.Reset, errs []error) {
-	errs = r.db.First(&m, "token = ? and user_id = ?", token, userID).GetErrors()
+func (r ResetRepoGorm) GetByToken(token goat.ID) (m models.Reset, errs []error) {
+	errs = r.db.First(&m, "token = ?", token).GetErrors()
 	return
 }
 

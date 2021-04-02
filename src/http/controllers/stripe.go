@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/liamhendricks/auth-backend/src/models"
 	"github.com/liamhendricks/auth-backend/src/repos"
+	"github.com/liamhendricks/auth-backend/src/services"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/checkout/session"
 	"github.com/stripe/stripe-go/v72/product"
@@ -19,6 +20,7 @@ type StripeController struct {
 	errors  goat.ErrorHandler
 	users   repos.UserRepo
 	courses repos.CourseRepo
+	mail    services.MailService
 	secret  string
 	key     string
 }
@@ -28,6 +30,7 @@ func NewStripeController(
 	secret string,
 	key string,
 	c repos.CourseRepo,
+	m services.MailService,
 	u repos.UserRepo) StripeController {
 	return StripeController{
 		errors:  es,
@@ -35,6 +38,7 @@ func NewStripeController(
 		key:     key,
 		users:   u,
 		courses: c,
+		mail:    m,
 	}
 }
 
@@ -111,6 +115,16 @@ func (s *StripeController) PaymentWebHook(c *gin.Context) {
 			errs = s.users.Save(&user)
 			if len(errs) > 0 {
 				s.respondUser(&user, models.UserMissingCourse, c)
+			}
+
+			data := make(map[string]string)
+			data["email"] = user.Email
+			data["name"] = user.Name
+			data["course"] = course.Name
+			email := s.mail.CreateEmailOfType(data, services.Purchase)
+			err = s.mail.Send(email)
+			if err != nil {
+				s.respondUser(&user, models.UserNoEmail, c)
 			}
 		}
 

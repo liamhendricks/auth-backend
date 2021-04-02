@@ -19,6 +19,7 @@ type ServiceContainer struct {
 	EmailListRepo   repos.EmailListRepo
 	PasswordService services.PasswordService
 	SessionService  services.SessionService
+	MailService     services.MailService
 	Errors          goat.ErrorHandler
 }
 
@@ -40,6 +41,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 	eh := goat.NewErrorHandler(l)
 	ps := services.NewPasswordServiceBcrypt()
 	ss := services.NewSessionServiceDB(sr)
+	es := services.NewSendgridMailer(c.SendgridFromEmail, c.SendgridFromName, c.SendgridBaseURL, c.SendgridSecretKey)
 
 	container = ServiceContainer{
 		Config:          c,
@@ -53,6 +55,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 		Errors:          eh,
 		PasswordService: ps,
 		SessionService:  ss,
+		MailService:     es,
 	}
 
 	return container, nil

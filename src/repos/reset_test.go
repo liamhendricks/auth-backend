@@ -24,7 +24,7 @@ func TestResetsRepo(t *testing.T) {
 	require.Nil(t, errs)
 
 	//should fail since this combo does not exist
-	_, errs = Tc.ResetRepo.GetByTokenUser(r.Token, Tf.Users[1].ID)
+	_, errs = Tc.ResetRepo.GetByToken(r.Token)
 	require.NotEmpty(t, errs)
 
 	theReset, errs := Tc.ResetRepo.GetByTokenUser(r.Token, r.UserID)

@@ -19,6 +19,7 @@ type UserController struct {
 	courseRepo     repos.CourseRepo
 	password       services.PasswordService
 	sessionService services.SessionService
+	mailService    services.MailService
 	errors         goat.ErrorHandler
 }
 
@@ -28,12 +29,15 @@ func NewUserController(
 	cr repos.CourseRepo,
 	ps services.PasswordService,
 	ss services.SessionService,
+	ms services.MailService,
 	es goat.ErrorHandler) UserController {
 	return UserController{
 		userRepo:       ur,
 		courseRepo:     cr,
+		resetRepo:      rr,
 		password:       ps,
 		sessionService: ss,
+		mailService:    ms,
 		errors:         es,
 	}
 }
@@ -59,6 +63,10 @@ type UpdateUserRequest struct {
 
 type AttachCourseRequest struct {
 	CourseName string `json:"course_name"`
+}
+
+type CreateForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required"`
 }
 
 type RevokeCourseRequest struct {
@@ -249,7 +257,16 @@ func (u *UserController) Store(c *gin.Context) {
 		return
 	}
 
-	//TODO: send welcome email
+	data := make(map[string]string)
+	data["email"] = user.Email
+	data["name"] = user.Name
+
+	email := u.mailService.CreateEmailOfType(data, services.Signup)
+	err = u.mailService.Send(email)
+	if err != nil {
+		u.errors.HandleErrorsM(c, errs, "failed to send welcome email", goat.RespondServerError)
+		return
+	}
 
 	goat.RespondData(c, userResponse{
 		user,
@@ -315,14 +332,13 @@ func (u *UserController) UserCourses(c *gin.Context) {
 }
 
 func (u *UserController) ForgotPassword(c *gin.Context) {
-	i := c.Param("id")
-	id, err := goat.ParseID(i)
-	if err != nil {
-		u.errors.HandleErrorM(c, err, "failed to parse id: "+i, goat.RespondBadRequestError)
+	req, ok := goat.GetRequest(c).(*CreateForgotPasswordRequest)
+	if !ok {
+		u.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
 		return
 	}
 
-	user, errs := u.userRepo.GetByID(id, false)
+	user, errs := u.userRepo.GetByEmail(req.Email, false)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
 			u.errors.HandleErrorsM(c, errs, "user does not exist", goat.RespondNotFoundError)
@@ -333,32 +349,34 @@ func (u *UserController) ForgotPassword(c *gin.Context) {
 		}
 	}
 
-	reset := models.Reset{
+	reset := &models.Reset{
 		Token:      goat.NewID(),
-		UserID:     id,
+		UserID:     user.ID,
 		Expiration: time.Now().Add(30 * time.Minute),
 	}
 
-	errs = u.resetRepo.Save(&reset)
+	errs = u.resetRepo.Save(reset)
 	if len(errs) > 0 {
 		u.errors.HandleErrorsM(c, errs, "failed to save reset", goat.RespondServerError)
 		return
 	}
 
-	//TODO: email service
-	//fire off email with link
+	emailData := make(map[string]string)
+	emailData["token"] = reset.Token.String()
+	emailData["email"] = user.Email
+	emailData["name"] = user.Name
+
+	email := u.mailService.CreateEmailOfType(emailData, services.Reset)
+	err := u.mailService.Send(email)
+	if err != nil {
+		u.errors.HandleErrorsM(c, errs, "failed to send email", goat.RespondBadRequestError)
+		return
+	}
 
 	goat.RespondMessage(c, fmt.Sprintf("reset password link has been sent to %s", user.Email))
 }
 
 func (u *UserController) ResetPassword(c *gin.Context) {
-	i := c.Param("id")
-	id, err := goat.ParseID(i)
-	if err != nil {
-		u.errors.HandleErrorM(c, err, "failed to parse id: "+i, goat.RespondBadRequestError)
-		return
-	}
-
 	req, ok := goat.GetRequest(c).(*ResetPasswordRequest)
 	if !ok {
 		u.errors.HandleMessage(c, "failed to get request", goat.RespondBadRequestError)
@@ -367,14 +385,14 @@ func (u *UserController) ResetPassword(c *gin.Context) {
 
 	token, err := goat.ParseID(req.Token)
 	if err != nil {
-		u.errors.HandleErrorM(c, err, "failed to parse id: "+i, goat.RespondBadRequestError)
+		u.errors.HandleErrorM(c, err, "failed to parse id: "+req.Token, goat.RespondBadRequestError)
 		return
 	}
 
-	reset, errs := u.resetRepo.GetByTokenUser(token, id)
+	reset, errs := u.resetRepo.GetByToken(token)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
-			u.errors.HandleErrorsM(c, errs, "token or user mismatch", goat.RespondNotFoundError)
+			u.errors.HandleErrorsM(c, errs, "token mismatch", goat.RespondNotFoundError)
 			return
 		} else {
 			u.errors.HandleErrorsM(c, errs, "failed to get reset", goat.RespondServerError)
@@ -387,7 +405,7 @@ func (u *UserController) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	user, errs := u.userRepo.GetByID(id, true)
+	user, errs := u.userRepo.GetByID(reset.UserID, true)
 	if len(errs) > 0 {
 		if goat.RecordNotFound(errs) {
 			u.errors.HandleErrorsM(c, errs, "user does not exist", goat.RespondNotFoundError)

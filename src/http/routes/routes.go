@@ -16,44 +16,42 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		c.CourseRepo,
 		c.PasswordService,
 		c.SessionService,
+		c.MailService,
 		c.Errors)
-
 	authController := controllers.NewAuthController(c.UserRepo,
 		c.PasswordService,
 		c.SessionService,
 		c.Errors)
-
-	lessonController := controllers.NewLessonController(c.LessonRepo, c.CourseRepo, c.Errors)
-	courseController := controllers.NewCourseController(c.CourseRepo, c.LessonRepo, c.Errors)
 	stripeController := controllers.NewStripeController(
 		c.Errors,
 		c.Config.StripeEndpointSecret,
 		c.Config.StripeSecretKey,
 		c.CourseRepo,
+		c.MailService,
 		c.UserRepo)
-
+	lessonController := controllers.NewLessonController(c.LessonRepo, c.CourseRepo, c.Errors)
+	courseController := controllers.NewCourseController(c.CourseRepo, c.LessonRepo, c.Errors)
 	emailListController := controllers.NewEmailListController(c.EmailListRepo, c.Errors)
 
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
+	engine.POST("/forgot",
+		goat.BindRequestMiddleware(controllers.CreateForgotPasswordRequest{}),
+		userController.ForgotPassword)
+	engine.POST("/reset",
+		goat.BindRequestMiddleware(controllers.ResetPasswordRequest{}),
+		userController.ResetPassword)
 
 	//user endpoints, must be self
 	users := engine.Group("/users")
 	users.Use(middleware.RequireSelf(c.Errors, c.UserRepo, c.SessionService))
 	{
 		users.GET("/:id", userController.Show)
-		users.GET("/:id/forgot", userController.ForgotPassword)
-		users.DELETE("/:id", userController.Delete)
-
 		users.GET("/:id/courses", userController.UserCourses)
-
+		users.DELETE("/:id", userController.Delete)
 		users.POST("/:id",
 			goat.BindRequestMiddleware(controllers.UpdateUserRequest{}),
 			userController.Update)
-
-		users.POST("/:id/reset",
-			goat.BindRequestMiddleware(controllers.ResetPasswordRequest{}),
-			userController.ResetPassword)
 	}
 
 	//open (anyone can create users)
