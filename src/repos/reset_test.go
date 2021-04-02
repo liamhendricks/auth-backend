@@ -23,14 +23,9 @@ func TestResetsRepo(t *testing.T) {
 	errs := Tc.ResetRepo.Save(r)
 	require.Nil(t, errs)
 
-	//should fail since this combo does not exist
-	_, errs = Tc.ResetRepo.GetByToken(r.Token)
-	require.NotEmpty(t, errs)
+	reset, errs := Tc.ResetRepo.GetByToken(r.Token)
+	require.Empty(t, errs)
 
-	theReset, errs := Tc.ResetRepo.GetByTokenUser(r.Token, r.UserID)
-	require.Equal(t, r.ID, theReset.ID)
-	require.Equal(t, time.Now().Before(theReset.Expiration), true)
-
-	errs = Tc.ResetRepo.Delete(theReset.ID)
+	errs = Tc.ResetRepo.Delete(reset.ID)
 	require.Empty(t, errs)
 }
