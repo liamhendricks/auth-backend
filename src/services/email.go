@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
@@ -15,8 +13,11 @@ type MailService interface {
 type SendgridMailer struct {
 	SenderEmailAddress string
 	SenderEmailName    string
+	APIKey             string
 	BaseUrl            string
-	client             *sendgrid.Client
+	ResetID            string
+	PurchaseID         string
+	SignupID           string
 }
 
 type TransactionalEmailType string
@@ -27,75 +28,94 @@ const Purchase TransactionalEmailType = "Thanks for your purchase"
 
 type TransactionalEmail struct {
 	EmailType      TransactionalEmailType
-	Data           string
+	Data           map[string]string
 	RecipientEmail string
 	RecipientName  string
+	ID             string
 }
 
-func NewSendgridMailer(email, name, baseUrl, key string) SendgridMailer {
-	client := sendgrid.NewSendClient(key)
+func NewSendgridMailer(email, name, baseUrl, key, resetID, purchaseID, signupID string) SendgridMailer {
 	return SendgridMailer{
 		SenderEmailAddress: email,
 		SenderEmailName:    name,
+		APIKey:             key,
 		BaseUrl:            baseUrl,
-		client:             client,
+		ResetID:            resetID,
+		PurchaseID:         purchaseID,
+		SignupID:           signupID,
 	}
 }
 
+//send transactional email
 func (m SendgridMailer) Send(emailObj *TransactionalEmail) error {
+	emailSender := mail.NewV3Mail()
+	e := mail.NewEmail(m.SenderEmailName, m.SenderEmailAddress)
 	to := mail.NewEmail(emailObj.RecipientName, emailObj.RecipientEmail)
-	from := mail.NewEmail(m.SenderEmailName, m.SenderEmailAddress)
+	emailSender.SetFrom(e)
+	emailSender.SetTemplateID(emailObj.ID)
+	p := mail.NewPersonalization()
+	p.AddTos(to)
 
-	message := mail.NewSingleEmail(from, string(emailObj.EmailType), to, "", emailObj.Data)
-	client := sendgrid.NewSendClient("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")
-	response, err := client.Send(message)
-	if err != nil || response.StatusCode > 301 {
-		return err
+	for k, v := range emailObj.Data {
+		p.SetDynamicTemplateData(k, v)
 	}
 
-	return nil
+	emailSender.AddPersonalizations(p)
+	request := sendgrid.GetRequest(m.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request.Method = "POST"
+	var Body = mail.GetRequestBody(emailSender)
+	request.Body = Body
+	response, err := sendgrid.API(request)
+	if err != nil || response.StatusCode > 301 {
+		return err
+	} else {
+		return nil
+	}
 }
 
 func (m SendgridMailer) CreateEmailOfType(data map[string]string, emailType TransactionalEmailType) *TransactionalEmail {
 	var emailObj TransactionalEmail
+	emailObj.Data = make(map[string]string)
 
 	switch emailType {
 	case Reset:
-		resetLink := m.BaseUrl + "/app/reset?token=" + data["token"]
-		emailObj.Data = fmt.Sprintf("<p>Here is your password reset link for your art lessons account: <a href=%s>Link</a></p>", resetLink)
-		emailObj.EmailType = Reset
-		emailObj.RecipientEmail = data["email"]
-		emailObj.RecipientName = data["name"]
+		reset(&emailObj, m.BaseUrl, m.ResetID, data)
 		break
 	case Purchase:
-		profileLink := m.BaseUrl + "/app/profile"
-		signupTemplate := `
-<div>
-  <h1>Thank you for purchasing: %s</h1>
-  <p>Here is a link to your profile to take the course! <a href=%s>Profile</a></p>
-  <p>Cheers, Lana Gloschat</p>
-</div>
-    `
-		emailObj.Data = fmt.Sprintf(signupTemplate, data["course"], profileLink)
-		emailObj.EmailType = Reset
-		emailObj.RecipientEmail = data["email"]
-		emailObj.RecipientName = data["name"]
+		purchase(&emailObj, m.BaseUrl, m.PurchaseID, data)
 		break
 	case Signup:
-		coursesLink := m.BaseUrl + "/courses"
-		signupTemplate := `
-<div>
-  <h1>Thank you for signing up on my website!</h1>
-  <p>I look forward to teaching you! Please check out all my courses <a href=%s>here</a>.</p>
-  <p>Cheers, Lana Gloschat</p>
-</div>
-    `
-		emailObj.Data = fmt.Sprintf(signupTemplate, coursesLink)
-		emailObj.EmailType = Reset
-		emailObj.RecipientEmail = data["email"]
-		emailObj.RecipientName = data["name"]
+		signup(&emailObj, m.BaseUrl, m.SignupID, data)
 		break
 	}
 
 	return &emailObj
+}
+
+func purchase(emailObj *TransactionalEmail, baseUrl, id string, data map[string]string) {
+	emailObj.Data = data
+	emailObj.ID = id
+	emailObj.EmailType = Reset
+	emailObj.RecipientEmail = data["email"]
+	emailObj.RecipientName = data["name"]
+}
+func signup(emailObj *TransactionalEmail, baseUrl, id string, data map[string]string) {
+	coursesLink := baseUrl + "/courses"
+	galleryLink := baseUrl + "/gallery/all"
+	data["coursesLink"] = coursesLink
+	data["galleryLink"] = galleryLink
+	emailObj.ID = id
+	emailObj.Data = data
+	emailObj.EmailType = Signup
+	emailObj.RecipientEmail = data["email"]
+	emailObj.RecipientName = data["name"]
+}
+func reset(emailObj *TransactionalEmail, baseUrl, id string, data map[string]string) {
+	resetLink := baseUrl + "/app/reset?token=" + data["token"]
+	data["resetLink"] = resetLink
+	emailObj.ID = id
+	emailObj.Data = data
+	emailObj.EmailType = Reset
+	emailObj.RecipientEmail = data["email"]
+	emailObj.RecipientName = data["name"]
 }

@@ -41,7 +41,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 	eh := goat.NewErrorHandler(l)
 	ps := services.NewPasswordServiceBcrypt()
 	ss := services.NewSessionServiceDB(sr)
-	es := services.NewSendgridMailer(c.SendgridFromEmail, c.SendgridFromName, c.SendgridBaseURL, c.SendgridSecretKey)
+	es := services.NewSendgridMailer(c.SendgridFromEmail, c.SendgridFromName, c.SendgridBaseURL, c.SendgridSecretKey, c.ResetTemplateID, c.PurchaseTemplateID, c.SignupTemplateID)
 
 	container = ServiceContainer{
 		Config:          c,

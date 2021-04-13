@@ -121,6 +121,9 @@ func (s *StripeController) PaymentWebHook(c *gin.Context) {
 			data["email"] = user.Email
 			data["name"] = user.Name
 			data["course"] = course.Name
+			data["facebookGroup"] = ""
+			data["critiqueDate"] = ""
+			data["officeDate"] = ""
 			email := s.mail.CreateEmailOfType(data, services.Purchase)
 			err = s.mail.Send(email)
 			if err != nil {

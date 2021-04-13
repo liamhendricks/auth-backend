@@ -12,6 +12,9 @@ type Config struct {
 	SendgridFromEmail    string
 	SendgridFromName     string
 	SendgridBaseURL      string
+	ResetTemplateID      string
+	PurchaseTemplateID   string
+	SignupTemplateID     string
 }
 
 func GetConfig() Config {
@@ -23,5 +26,8 @@ func GetConfig() Config {
 		SendgridFromEmail:    viper.GetString("sendgrid_from_email"),
 		SendgridFromName:     viper.GetString("sendgrid_from_name"),
 		SendgridBaseURL:      viper.GetString("sendgrid_base_url"),
+		PurchaseTemplateID:   viper.GetString("purchase_template_id"),
+		SignupTemplateID:     viper.GetString("signup_template_id"),
+		ResetTemplateID:      viper.GetString("reset_template_id"),
 	}
 }
