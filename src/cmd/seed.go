@@ -34,9 +34,25 @@ var seedCommand = &cobra.Command{
 			Session:  nil,
 		}
 
+		var d []*models.Date
+		var l []*models.Lesson
+		date := models.MakeDate()
+		date2 := models.MakeDate()
+		d = append(d, &date, &date2)
+
+		lesson := models.Lesson{
+			Name:     "TestLesson",
+			Ordering: 0,
+			Data:     "{}",
+		}
+
+		l = append(l, &lesson)
+
 		course := models.Course{
 			Name:       "TestCourse",
 			CourseType: "Free",
+			Dates:      d,
+			Lessons:    l,
 		}
 
 		errs := app.CourseRepo.Save(&course)

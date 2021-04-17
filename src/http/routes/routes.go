@@ -32,6 +32,7 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 	lessonController := controllers.NewLessonController(c.LessonRepo, c.CourseRepo, c.Errors)
 	courseController := controllers.NewCourseController(c.CourseRepo, c.LessonRepo, c.Errors)
 	emailListController := controllers.NewEmailListController(c.EmailListRepo, c.Errors)
+	dateController := controllers.NewDateController(c.DateRepo, c.Errors)
 
 	engine := router.GetEngine()
 	engine.GET("/health", Health)
@@ -55,11 +56,14 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 			userController.Update)
 	}
 
-	//open (anyone can create users)
+	//open
 	users = engine.Group("/users")
 	users.POST("",
 		goat.BindRequestMiddleware(controllers.CreateUserRequest{}),
 		userController.Store)
+
+	openCourse := engine.Group("/courses")
+	openCourse.GET("/:id", courseController.Show)
 
 	//auth
 	auth := engine.Group("/auth")
@@ -123,6 +127,20 @@ func InitRoutes(router http.Router, c app.ServiceContainer) {
 		courses.POST("/:id/lessons/attach",
 			goat.BindRequestMiddleware(controllers.AttachLessonRequest{}),
 			courseController.AttachLesson)
+
+		//dates
+		dates := api.Group("/dates")
+		dates.GET("", dateController.Index)
+		dates.GET("/:id", dateController.Show)
+		dates.DELETE("/:id", dateController.Delete)
+
+		dates.POST("",
+			goat.BindRequestMiddleware(controllers.CreateDateRequest{}),
+			dateController.Store)
+
+		dates.POST("/:id",
+			goat.BindRequestMiddleware(controllers.UpdateDateRequest{}),
+			dateController.Update)
 	}
 
 	webhooks := engine.Group("/webhooks")

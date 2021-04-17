@@ -49,7 +49,7 @@ func (c CourseRepoGorm) GetAll(q *query.Query) (m []*models.Course, errs []error
 func (c CourseRepoGorm) GetByID(id goat.ID, load bool) (m models.Course, errs []error) {
 	q := c.db
 	if load {
-		q = q.Preload("Lessons").Preload("Users")
+		q = q.Preload("Lessons").Preload("Users").Preload("Dates")
 	}
 	errs = q.First(&m, "id = ?", id).GetErrors()
 	return
@@ -58,7 +58,7 @@ func (c CourseRepoGorm) GetByID(id goat.ID, load bool) (m models.Course, errs []
 func (c CourseRepoGorm) GetByName(name string, load bool) (m models.Course, errs []error) {
 	q := c.db
 	if load {
-		q = q.Preload("Lessons").Preload("Users")
+		q = q.Preload("Lessons").Preload("Users").Preload("Dates")
 	}
 	errs = q.First(&m, "name = ?", name).GetErrors()
 	return

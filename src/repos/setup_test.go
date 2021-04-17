@@ -18,6 +18,7 @@ type TestFixtures struct {
 	List    []models.EmailList
 	Lessons []*models.Lesson
 	Courses []*models.Course
+	Dates   []*models.Date
 }
 
 type TestContainer struct {
@@ -27,6 +28,7 @@ type TestContainer struct {
 	SessionRepo   SessionRepo
 	CourseRepo    CourseRepo
 	ResetRepo     ResetRepo
+	DateRepo      DateRepo
 }
 
 func TestMain(m *testing.M) {
@@ -39,6 +41,7 @@ func TestMain(m *testing.M) {
 	sr := NewSessionRepoGorm(db)
 	c := NewCourseRepoGorm(db)
 	rr := NewResetRepoGorm(db)
+	dr := NewDateRepoGorm(db)
 	Tc = TestContainer{
 		EmailListRepo: el,
 		UserRepo:      r,
@@ -46,6 +49,7 @@ func TestMain(m *testing.M) {
 		CourseRepo:    c,
 		SessionRepo:   sr,
 		ResetRepo:     rr,
+		DateRepo:      dr,
 	}
 
 	seedTests(5, db)
@@ -86,6 +90,7 @@ func seedTests(num int, db *gorm.DB) {
 	var l []*models.Lesson
 	var fc []*models.Course
 	var pc []*models.Course
+	var d []*models.Date
 
 	freeCourse := models.MakeCourse(true)
 	paidCourse := models.MakeCourse(false)
@@ -93,6 +98,17 @@ func seedTests(num int, db *gorm.DB) {
 	persistFixture(db, &paidCourse)
 	fc = append(fc, &freeCourse)
 	pc = append(pc, &paidCourse)
+
+	for i := 0; i < 5; i++ {
+		pd := models.MakeDate()
+		pd.CourseID = paidCourse.ID
+		persistFixture(db, &pd)
+
+		fd := models.MakeDate()
+		fd.CourseID = freeCourse.ID
+		persistFixture(db, &fd)
+		d = append(d, &pd, &fd)
+	}
 
 	for i := 0; i < num; i++ {
 		var lesson models.Lesson
@@ -126,6 +142,7 @@ func seedTests(num int, db *gorm.DB) {
 	Tf.List = el
 	Tf.Lessons = l
 	Tf.Courses = fc
+	Tf.Dates = d
 	Tf.Courses = append(Tf.Courses, pc...)
 }
 

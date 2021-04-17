@@ -118,12 +118,19 @@ func (s *StripeController) PaymentWebHook(c *gin.Context) {
 			}
 
 			data := make(map[string]string)
+			for _, c := range course.Dates {
+				if c.Name == "critiqueDate" {
+					data["critiqueDate"] = c.Date
+				}
+
+				if c.Name == "officeDate" {
+					data["officeDate"] = c.Date
+				}
+			}
 			data["email"] = user.Email
 			data["name"] = user.Name
 			data["course"] = course.Name
 			data["facebookGroup"] = ""
-			data["critiqueDate"] = ""
-			data["officeDate"] = ""
 			email := s.mail.CreateEmailOfType(data, services.Purchase)
 			err = s.mail.Send(email)
 			if err != nil {

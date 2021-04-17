@@ -64,6 +64,10 @@ func (cc *CourseController) Index(c *gin.Context) {
 		q.Preload = append(q.Preload, "Lessons")
 	}
 
+	if _, ok := qp["with_dates"]; ok {
+		q.Preload = append(q.Preload, "Dates")
+	}
+
 	courses, errs := cc.courseRepo.GetAll(&q)
 	if len(errs) > 0 {
 		goat.RespondServerErrors(c, errs)

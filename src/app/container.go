@@ -16,6 +16,7 @@ type ServiceContainer struct {
 	LessonRepo      repos.LessonRepo
 	CourseRepo      repos.CourseRepo
 	ResetRepo       repos.ResetRepo
+	DateRepo        repos.DateRepo
 	EmailListRepo   repos.EmailListRepo
 	PasswordService services.PasswordService
 	SessionService  services.SessionService
@@ -34,6 +35,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 	l := goat.GetLogger()
 	ur := repos.NewUserRepoGorm(db, false)
 	lr := repos.NewLessonRepoGorm(db)
+	dr := repos.NewDateRepoGorm(db)
 	cr := repos.NewCourseRepoGorm(db)
 	rr := repos.NewResetRepoGorm(db)
 	sr := repos.NewSessionRepoGorm(db)
@@ -52,6 +54,7 @@ func GetApp(c Config) (ServiceContainer, error) {
 		CourseRepo:      cr,
 		ResetRepo:       rr,
 		EmailListRepo:   er,
+		DateRepo:        dr,
 		Errors:          eh,
 		PasswordService: ps,
 		SessionService:  ss,

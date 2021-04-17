@@ -58,10 +58,7 @@ func TestGetUserCourses(t *testing.T) {
 	id := Tf.Courses[0].ID
 	course, errs := Tc.CourseRepo.GetByID(id, true)
 	require.Empty(t, errs)
-	require.NotNil(t, course.Lessons)
-	for _, l := range course.Lessons {
-		println(l)
-	}
+	require.NotNil(t, course.Users)
 }
 
 func TestCoursesRepoDelete(t *testing.T) {

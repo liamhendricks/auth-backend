@@ -12,6 +12,7 @@ type Course struct {
 	Name       string     `json:"name" binding:"required"`
 	Lessons    []*Lesson  `json:"lessons" gorm:"ForeignKey:CourseID"`
 	Users      []*User    `gorm:"many2many:user_courses;"`
+	Dates      []*Date    `gorm:"dates" gorm:"ForeignKey:CourseID"`
 	Max        int        `json:"max" binding:"required"`
 	CourseType CourseType `json:"course_type" binding:"required"`
 }
@@ -25,6 +26,7 @@ func CourseTypeFromString(s string) (CourseType, error) {
 	if s == string(FreeCourse) || s == string(PaidCourse) {
 		return CourseType(s), nil
 	}
+
 	return CourseType(""), errors.New("invalid course type")
 }
 
@@ -35,6 +37,7 @@ func MakeCourse(free bool) Course {
 	} else {
 		t = PaidCourse
 	}
+
 	return Course{
 		Name:       fake.Title(),
 		CourseType: t,
